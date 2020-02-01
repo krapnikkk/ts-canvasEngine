@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+</head>
+
+<body>
+    <canvas id="canvas" width="800" height="600"></canvas>
+</body>
+<script src="node_modules/systemjs/dist/system.js"></script>
+<script src="node_modules/typescript/lib/typescript.js"></script>
+<script src="./dist/libs/engine.js"></script>
+<script>
+    System.config({
+        transpiler: "typescript",
+        packages: {
+            "/": {
+                defaultExtension: "ts"
+            }
+        }
+    });
+    System.import("./Main.ts").then(null, console.error.bind(console));
+</script>
+
+</html>
