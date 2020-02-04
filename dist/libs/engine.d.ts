@@ -31,7 +31,7 @@ declare module engine {
         addTimer(callback: TimerCallback, timeout?: number, onlyOnce?: boolean, data?: any): number;
         private _handleTimers;
         private _fps;
-        readonly fps: number;
+        get fps(): number;
     }
 }
 declare module engine {
@@ -52,17 +52,29 @@ declare module engine {
 declare module engine {
     class RenderStateStack {
         private _stack;
-        private readonly _currentState;
+        private get _currentState();
         save(): void;
         restore(): void;
-        lineWidth: number;
-        strokeStyle: string;
-        fillStyle: string;
+        get lineWidth(): number;
+        set lineWidth(value: number);
+        get strokeStyle(): string;
+        set strokeStyle(value: string);
+        get fillStyle(): string;
+        set fillStyle(value: string);
         printCurrentStateInfo(): void;
     }
 }
 declare module engine {
-    class TestCanvas2DApplication extends Canvas2DApplication {
+    type Repeatition = "repeat" | "repeat-x" | "repeat-y" | "no-repeat";
+    type TextAlign = "start" | "left" | "center" | "right" | "end";
+    type TextBaseline = "alphabetic" | "hanging" | "top" | "middle" | "bottom";
+    type FontType = "10px sans-serif" | "15px sans-serif" | "20px sans-serif" | "25px sans-serif";
+    type FontStyle = "normal" | "italic" | "oblique";
+    type FontVariant = "normal" | "small-caps";
+    type FontWeight = "normal" | "bold" | "bolder" | "lighter" | "100" | "200" | "300" | "400" | "500" | "600" | "700" | "800" | "900";
+    type FontSize = "10px" | "12px" | "16px" | "18px" | "24px" | "50%" | "75%" | "100%" | "125%" | "150%" | "xx-small" | "x-small" | "small" | "medium" | "large" | "x-large" | "xx-large";
+    type FontFamily = "sans-serif" | "serif" | "courier" | "fantasy" | "monospace";
+    export class TestCanvas2DApplication extends Canvas2DApplication {
         constructor(canvas: HTMLCanvasElement);
         drawRect(x: number, y: number, w: number, h: number): void;
         testMyRenderStateStack(): void;
@@ -71,7 +83,29 @@ declare module engine {
         private _updateLineDashOffset;
         timeCallback(id: number, data: any): void;
         start(): void;
+        static Colors: string[];
+        private _linearGradient;
+        fillLinearRect(x: number, y: number, w: number, h: number): void;
+        private _radialGradient;
+        fillRadialGradient(x: number, y: number, w: number, h: number): void;
+        private _pattern;
+        fillPattern(x: number, y: number, w: number, h: number, repeat?: Repeatition): void;
+        fillCircle(x: number, y: number, radius: number, fillStyle?: string | CanvasGradient | CanvasPattern): void;
+        strokeLine(x0: number, y0: number, x1: number, y1: number): void;
+        strokeCoord(orginX: number, orginY: number, width: number, height: number, lineWidth?: number): void;
+        strokeRect(x: number, y: number, w: number, h: number, color?: string): void;
+        strokeGrid(color?: string, interval?: number): void;
+        printTextStates(): void;
+        fillText(text: string, x: number, y: number, color?: string, align?: TextAlign, baseline?: TextBaseline, font?: FontType): void;
+        calcTextSize(text: string, char?: string, scale?: number): Size;
+        testCanvas2DTextLayout(): void;
+        calcLocalTextRectangle(layout: ELayout, text: string, parentWidth: number, parentHeight: number): Rectangle;
+        fillRectWithTitle(x: number, y: number, width: number, height: number, title?: string, layout?: ELayout, color?: string, showCoord?: boolean): void;
+        makeFontString(size?: FontSize, weight?: FontWeight, style?: FontStyle, variant?: FontVariant, family?: FontFamily): string;
+        testMyTextLayout(font?: string): void;
+        loadAndDrawImage(url: string): void;
     }
+    export {};
 }
 declare module engine {
     class Timer {
@@ -100,7 +134,7 @@ declare module engine {
         constructor();
         reset(): void;
         isString(str: string): boolean;
-        readonly type: ETokenType;
+        get type(): ETokenType;
         getString(): string;
         getFloat(): number;
         getInt(): number;
@@ -133,7 +167,7 @@ declare module engine {
         createIDoom3Token(): IDoom3Token;
         private _current;
         moveNext(): boolean;
-        readonly current: IDoom3Token;
+        get current(): IDoom3Token;
     }
 }
 declare module engine {
@@ -167,6 +201,31 @@ declare module engine {
         KEYUP = 6,
         KEYDOWN = 7,
         KEYPRESS = 8
+    }
+}
+declare module engine {
+    enum ELayout {
+        LEFT_TOP = 0,
+        RIGHT_TOP = 1,
+        RIGHT_BOTTOM = 2,
+        LEFT_BOTTOM = 3,
+        CENTER_MIDDLE = 4,
+        CENTER_TOP = 5,
+        RIGHT_MIDDLE = 6,
+        CENTER_BOTTOM = 7,
+        LEFT_MIDDLE = 8
+    }
+}
+declare module engine {
+    enum ETextLayout {
+        LEFT_TOP = 0,
+        RIGHT_TOP = 1,
+        RIGHT_BOTTOM = 2,
+        LEFT_BOTTOM = 3,
+        CENTER_MIDDLE = 4,
+        CENTER_TOP = 5,
+        CENTER_BOTTOM = 6,
+        LETT_MIDDLE = 7
     }
 }
 declare module engine {
@@ -204,12 +263,33 @@ declare module engine {
 declare module engine {
 }
 declare module engine {
+    class Rectangle {
+        origin: vec2;
+        size: Size;
+        constructor(orign?: vec2, size?: Size);
+        static create(x?: number, y?: number, w?: number, h?: number): Rectangle;
+    }
+}
+declare module engine {
+    class Size {
+        values: Float32Array;
+        constructor(w?: number, h?: number);
+        set width(value: number);
+        get width(): number;
+        set height(value: number);
+        get height(): number;
+        static create(w?: number, h?: number): Size;
+    }
+}
+declare module engine {
     class vec2 {
         values: Float32Array;
         constructor(x?: number, y?: number);
         toString(): string;
-        x: number;
-        y: number;
+        get x(): number;
+        set x(x: number);
+        get y(): number;
+        set y(y: number);
         reset(x: number | undefined, y: number): vec2;
         static create(x?: number, y?: number): vec2;
     }

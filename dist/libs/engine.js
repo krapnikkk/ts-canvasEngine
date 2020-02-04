@@ -1,8 +1,11 @@
 "use strict";
 var __extends = (this && this.__extends) || (function () {
-    var extendStatics = Object.setPrototypeOf ||
-        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+    var extendStatics = function (d, b) {
+        extendStatics = Object.setPrototypeOf ||
+            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+            function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+        return extendStatics(d, b);
+    };
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
@@ -363,16 +366,406 @@ var engine;
         };
         TestCanvas2DApplication.prototype.timeCallback = function (id, data) {
             this._updateLineDashOffset();
-            this.drawRect(10, 10, this.canvas.width - 20, this.canvas.height - 20);
+            // this.drawRect(10, 10, this.canvas.width - 20, this.canvas.height - 20);
         };
         TestCanvas2DApplication.prototype.start = function () {
             var _this = this;
             console.log("start");
+            this.strokeGrid();
+            // this.fillLinearRect(10, 10, 100, 100);
+            // this.fillRadialGradient(10, 110, 100, 100);
+            // this.fillPattern(10, 210, 400, 400);
+            // this.printTextStates();
+            // this.fillText("hello world",100,100);
+            // this.testCanvas2DTextLayout();
+            // this.testMyTextLayout();
+            this.loadAndDrawImage("./assets/test.jpg");
             this.addTimer(function (id, data) {
                 _this.timeCallback(id, data);
             }, 0.05);
             _super.prototype.start.call(this);
         };
+        TestCanvas2DApplication.prototype.fillLinearRect = function (x, y, w, h) {
+            if (this.context2D !== null) {
+                this.context2D.save();
+                if (this._linearGradient === undefined) {
+                    this._linearGradient = this.context2D.createLinearGradient(x, y, x + w, y);
+                    // this . _linearGradient = this . context2D . createLinearGradient ( x , y , x , y + h ) ;
+                    // this . _linearGradient = this . context2D . createLinearGradient ( x , y , x + w , y + h ) ;
+                    // this . _linearGradient = this . context2D . createLinearGradient ( x + w , y + h , x , y) ;
+                    this._linearGradient.addColorStop(0.0, 'grey');
+                    this._linearGradient.addColorStop(0.25, 'rgba( 255 , 0 , 0 , 1 ) ');
+                    this._linearGradient.addColorStop(0.5, 'green');
+                    this._linearGradient.addColorStop(0.75, '#0000FF');
+                    this._linearGradient.addColorStop(1.0, 'black');
+                }
+                this.context2D.fillStyle = this._linearGradient;
+                this.context2D.beginPath();
+                this.context2D.rect(x, y, w, h);
+                this.context2D.fill();
+                this.context2D.restore();
+            }
+        };
+        TestCanvas2DApplication.prototype.fillRadialGradient = function (x, y, w, h) {
+            if (this.context2D !== null) {
+                this.context2D.save();
+                if (this._radialGradient === undefined) {
+                    var centX = x + w * 0.5;
+                    var centY = y + h * 0.5;
+                    var radius = Math.min(w, h);
+                    radius *= 0.5;
+                    this._radialGradient = this.context2D.createRadialGradient(centX, centY, radius * 0.1, centX, centY, radius);
+                    this._radialGradient.addColorStop(0.0, 'black');
+                    this._radialGradient.addColorStop(0.25, 'rgba( 255 , 0 , 0 , 1 ) ');
+                    this._radialGradient.addColorStop(0.5, 'green');
+                    this._radialGradient.addColorStop(0.75, '#0000FF');
+                    this._radialGradient.addColorStop(1.0, 'white');
+                }
+                this.context2D.fillStyle = this._radialGradient;
+                this.context2D.beginPath();
+                this.context2D.rect(x, y, w, h);
+                this.context2D.fill();
+                this.context2D.restore();
+            }
+        };
+        TestCanvas2DApplication.prototype.fillPattern = function (x, y, w, h, repeat) {
+            var _this = this;
+            if (repeat === void 0) { repeat = "repeat"; }
+            if (this.context2D !== null) {
+                this.context2D.save();
+                if (this._pattern === undefined) {
+                    var img_1 = document.createElement('img');
+                    img_1.src = './assets/test.jpg';
+                    img_1.onload = function (ev) {
+                        if (_this.context2D !== null) {
+                            _this._pattern = _this.context2D.createPattern(img_1, repeat);
+                            if (_this._pattern) {
+                                _this.context2D.fillStyle = _this._pattern;
+                            }
+                            _this.context2D.beginPath();
+                            _this.context2D.rect(x, y, w, h);
+                            _this.context2D.fill();
+                            _this.context2D.restore();
+                        }
+                    };
+                }
+                else {
+                    this.context2D.fillStyle = this._pattern;
+                    this.context2D.beginPath();
+                    this.context2D.rect(x, y, w, h);
+                    this.context2D.fill();
+                    this.context2D.restore();
+                }
+            }
+        };
+        TestCanvas2DApplication.prototype.fillCircle = function (x, y, radius, fillStyle) {
+            if (fillStyle === void 0) { fillStyle = "red"; }
+            if (this.context2D !== null) {
+                this.context2D.save();
+                this.context2D.fillStyle = fillStyle;
+                this.context2D.beginPath();
+                this.context2D.arc(x, y, radius, 0, Math.PI * 2);
+                this.context2D.fill();
+                this.context2D.restore();
+            }
+        };
+        TestCanvas2DApplication.prototype.strokeLine = function (x0, y0, x1, y1) {
+            if (this.context2D !== null) {
+                this.context2D.beginPath();
+                this.context2D.moveTo(x0, y0);
+                this.context2D.lineTo(x1, y1);
+                this.context2D.stroke();
+            }
+        };
+        TestCanvas2DApplication.prototype.strokeCoord = function (orginX, orginY, width, height, lineWidth) {
+            if (lineWidth === void 0) { lineWidth = 3; }
+            if (this.context2D !== null) {
+                this.context2D.save();
+                this.context2D.lineWidth = lineWidth;
+                this.context2D.strokeStyle = 'red';
+                this.strokeLine(orginX, orginY, orginX + width, orginY);
+                this.context2D.strokeStyle = 'blue';
+                this.strokeLine(orginX, orginY, orginX, orginY + height);
+                this.context2D.restore();
+            }
+        };
+        TestCanvas2DApplication.prototype.strokeRect = function (x, y, w, h, color) {
+            if (color === void 0) { color = 'black'; }
+            if (this.context2D !== null) {
+                this.context2D.save();
+                this.context2D.strokeStyle = color;
+                this.context2D.beginPath();
+                this.context2D.moveTo(x, y);
+                this.context2D.lineTo(x + w, y);
+                this.context2D.lineTo(x + w, y + h);
+                this.context2D.lineTo(x, y + h);
+                this.context2D.closePath();
+                this.context2D.stroke();
+                this.context2D.restore();
+            }
+        };
+        TestCanvas2DApplication.prototype.strokeGrid = function (color, interval) {
+            if (color === void 0) { color = "grey"; }
+            if (interval === void 0) { interval = 10; }
+            if (this.context2D !== null) {
+                this.context2D.save();
+                this.context2D.strokeStyle = color;
+                this.context2D.lineWidth = 0.5;
+                for (var i = interval + 0.5; i < this.canvas.width; i += interval) {
+                    this.strokeLine(i, 0, i, this.canvas.height);
+                }
+                for (var i = interval + 0.5; i < this.canvas.height; i += interval) {
+                    this.strokeLine(0, i, this.canvas.width, i);
+                }
+                this.context2D.restore();
+                this.fillCircle(0, 0, 5, 'green');
+                this.strokeCoord(0, 0, this.canvas.width, this.canvas.height);
+            }
+        };
+        TestCanvas2DApplication.prototype.printTextStates = function () {
+            if (this.context2D !== null) {
+                console.log("=======TextState========");
+                console.log("font\uFF1A" + this.context2D.font);
+                console.log("textAlign\uFF1A" + this.context2D.textAlign);
+                console.log("textBaseline:" + this.context2D.textBaseline);
+            }
+        };
+        TestCanvas2DApplication.prototype.fillText = function (text, x, y, color, align, baseline, font) {
+            if (color === void 0) { color = "black"; }
+            if (align === void 0) { align = "left"; }
+            if (baseline === void 0) { baseline = "top"; }
+            if (font === void 0) { font = '10px sans-serif'; }
+            if (this.context2D !== null) {
+                this.context2D.save();
+                this.context2D.textAlign = align;
+                this.context2D.textBaseline = baseline;
+                this.context2D.font = font;
+                this.context2D.fillStyle = color;
+                this.context2D.fillText(text, x, y);
+                this.context2D.restore();
+            }
+        };
+        TestCanvas2DApplication.prototype.calcTextSize = function (text, char, scale) {
+            if (char === void 0) { char = 'W'; }
+            if (scale === void 0) { scale = 0.5; }
+            if (this.context2D !== null) {
+                var size = new engine.Size();
+                size.width = this.context2D.measureText(text).width;
+                var w = this.context2D.measureText(char).width;
+                size.height = w + w * scale;
+                return size;
+            }
+            alert(" context2D 渲染上下文为null ");
+            throw new Error(" context2D 渲染上下文为null ");
+        };
+        TestCanvas2DApplication.prototype.testCanvas2DTextLayout = function () {
+            var x = 20;
+            var y = 20;
+            var width = this.canvas.width - x * 2;
+            var height = this.canvas.height - y * 2;
+            var drawX = x;
+            var drawY = y;
+            var radius = 3;
+            // this.fillRectWithTitle( x, y, width, height );
+            this.fillText("left-top", drawX, drawY, 'black', 'left', 'top' /*, '20px sans-serif' */);
+            this.fillCircle(drawX, drawY, radius, 'black');
+            drawX = x + width;
+            drawY = y;
+            this.fillText("right-top", drawX, drawY, 'black', 'right', 'top' /* , '20px sans-serif' */);
+            this.fillCircle(drawX, drawY, radius, 'black');
+            drawX = x + width;
+            drawY = y + height;
+            this.fillText("right-bottom", drawX, drawY, 'black', 'right', 'bottom' /* , '20px sans-serif' */);
+            this.fillCircle(drawX, drawY, radius, 'black');
+            drawX = x;
+            drawY = y + height;
+            this.fillText("left-bottom", drawX, drawY, 'black', 'left', 'bottom' /* , '20px sans-serif' */);
+            this.fillCircle(drawX, drawY, radius, 'black');
+            drawX = x + width * 0.5;
+            drawY = y + height * 0.5;
+            this.fillText("center-middle", drawX, drawY, 'black', 'center', 'middle' /* , '20px sans-serif' */);
+            this.fillCircle(drawX, drawY, radius, 'red');
+            drawX = x + width * 0.5;
+            drawY = y;
+            this.fillText("center-top", drawX, drawY, 'blue', 'center', 'top' /* , '20px sans-serif' */);
+            this.fillCircle(drawX, drawY, radius, 'black');
+            drawX = x + width;
+            drawY = y + height * 0.5;
+            this.fillText("right-middle", drawX, drawY, 'blue', 'right', 'middle' /* , '20px sans-serif' */);
+            this.fillCircle(drawX, drawY, radius, 'black');
+            drawX = x + width * 0.5;
+            drawY = y + height;
+            this.fillText("center-bottom", drawX, drawY, 'blue', 'center', 'bottom');
+            this.fillCircle(drawX, drawY, radius, 'black');
+            drawX = x;
+            drawY = y + height * 0.5;
+            this.fillText("left-middle", drawX, drawY, 'blue', 'left', 'middle' /* , '20px sans-serif' */);
+            this.fillCircle(drawX, drawY, radius, 'black');
+        };
+        TestCanvas2DApplication.prototype.calcLocalTextRectangle = function (layout, text, parentWidth, parentHeight) {
+            var s = this.calcTextSize(text);
+            var o = engine.vec2.create();
+            var left = 0;
+            var top = 0;
+            var right = parentWidth - s.width;
+            var bottom = parentHeight - s.height;
+            var center = right * 0.5;
+            var middle = bottom * 0.5;
+            switch (layout) {
+                case engine.ELayout.LEFT_TOP:
+                    o.x = left;
+                    o.y = top;
+                    break;
+                case engine.ELayout.RIGHT_TOP:
+                    o.x = right;
+                    o.y = top;
+                    break;
+                case engine.ELayout.RIGHT_BOTTOM:
+                    o.x = right;
+                    o.y = bottom;
+                    break;
+                case engine.ELayout.LEFT_BOTTOM:
+                    o.x = left;
+                    o.y = bottom;
+                    break;
+                case engine.ELayout.CENTER_MIDDLE:
+                    o.x = center;
+                    o.y = middle;
+                    break;
+                case engine.ELayout.CENTER_TOP:
+                    o.x = center;
+                    o.y = 0;
+                    break;
+                case engine.ELayout.RIGHT_MIDDLE:
+                    o.x = right;
+                    o.y = middle;
+                    break;
+                case engine.ELayout.CENTER_BOTTOM:
+                    o.x = center;
+                    o.y = bottom;
+                    break;
+                case engine.ELayout.LEFT_MIDDLE:
+                    o.x = left;
+                    o.y = middle;
+                    break;
+            }
+            return new engine.Rectangle(o, s);
+        };
+        TestCanvas2DApplication.prototype.fillRectWithTitle = function (x, y, width, height, title, layout, color, showCoord) {
+            if (title === void 0) { title = ''; }
+            if (layout === void 0) { layout = engine.ELayout.CENTER_MIDDLE; }
+            if (color === void 0) { color = 'grey'; }
+            if (showCoord === void 0) { showCoord = true; }
+            if (this.context2D !== null) {
+                this.context2D.save();
+                this.context2D.fillStyle = color;
+                this.context2D.beginPath();
+                this.context2D.rect(x, y, width, height);
+                this.context2D.fill();
+                if (title.length !== 0) {
+                    var rect = this.calcLocalTextRectangle(layout, title, width, height);
+                    this.fillText(title, x + rect.origin.x, y + rect.origin.y, 'white', 'left', 'top' /*, '10px sans-serif'*/);
+                    this.strokeRect(x + rect.origin.x, y + rect.origin.y, rect.size.width, rect.size.height, 'rgba( 0 , 0 , 0 , 0.5 ) ');
+                    this.fillCircle(x + rect.origin.x, y + rect.origin.y, 2);
+                }
+                if (showCoord) {
+                    this.strokeCoord(x, y, width + 20, height + 20);
+                    this.fillCircle(x, y, 3);
+                }
+                this.context2D.restore();
+            }
+        };
+        TestCanvas2DApplication.prototype.makeFontString = function (size, weight, style, variant, family) {
+            if (size === void 0) { size = '10px'; }
+            if (weight === void 0) { weight = 'normal'; }
+            if (style === void 0) { style = 'normal'; }
+            if (variant === void 0) { variant = 'normal'; }
+            if (family === void 0) { family = 'sans-serif'; }
+            var strs = [];
+            strs.push(style);
+            strs.push(variant);
+            strs.push(weight);
+            strs.push(size);
+            strs.push(family);
+            var ret = strs.join(" ");
+            console.log(ret);
+            return ret;
+        };
+        TestCanvas2DApplication.prototype.testMyTextLayout = function (font) {
+            if (font === void 0) { font = this.makeFontString("10px", "normal", "normal", "normal", 'sans-serif'); }
+            var x = 20;
+            var y = 20;
+            var width = this.canvas.width - x * 2;
+            var height = this.canvas.height - y * 2;
+            var right = x + width;
+            var bottom = y + height;
+            var drawX = x;
+            var drawY = y;
+            var drawWidth = 150;
+            var drawHeight = 50;
+            if (this.context2D !== null) {
+                this.context2D.save();
+                this.context2D.font = font;
+                this.fillRectWithTitle(x, y, width, height);
+                this.fillRectWithTitle(drawX, drawY, drawWidth, drawHeight, 'left-top', engine.ELayout.LEFT_TOP, 'rgba( 255 , 255 , 0 , 0.2 )');
+                drawX = right - drawWidth;
+                drawY = y;
+                this.fillRectWithTitle(drawX, drawY, drawWidth, drawHeight, 'right-top', engine.ELayout.RIGHT_TOP, 'rgba( 255 , 255 , 0 , 0.2 )');
+                drawX = right - drawWidth;
+                drawY = bottom - drawHeight;
+                this.fillRectWithTitle(drawX, drawY, drawWidth, drawHeight, 'right-bottom', engine.ELayout.RIGHT_BOTTOM, 'rgba( 255 , 255 , 0 , 0.2 )');
+                drawX = x;
+                drawY = bottom - drawHeight;
+                this.fillRectWithTitle(drawX, drawY, drawWidth, drawHeight, 'left-bottom', engine.ELayout.LEFT_BOTTOM, 'rgba( 255 , 255 , 0 , 0.2 )');
+                drawX = (right - drawWidth) * 0.5;
+                drawY = (bottom - drawHeight) * 0.5;
+                this.fillRectWithTitle(drawX, drawY, drawWidth, drawHeight, 'center-middle', engine.ELayout.CENTER_MIDDLE, 'rgba( 255 , 0 , 0 , 0.2 )');
+                drawX = (right - drawWidth) * 0.5;
+                drawY = y;
+                this.fillRectWithTitle(drawX, drawY, drawWidth, drawHeight, 'center-top', engine.ELayout.CENTER_TOP, 'rgba( 0 , 255 , 0 , 0.2 )');
+                drawX = (right - drawWidth);
+                drawY = (bottom - drawHeight) * 0.5;
+                this.fillRectWithTitle(drawX, drawY, drawWidth, drawHeight, 'right-middle', engine.ELayout.RIGHT_MIDDLE, 'rgba( 0 , 255 , 0 , 0.2 )');
+                drawX = (right - drawWidth) * 0.5;
+                drawY = (bottom - drawHeight);
+                this.fillRectWithTitle(drawX, drawY, drawWidth, drawHeight, 'center-bottom', engine.ELayout.CENTER_BOTTOM, 'rgba( 0 , 255 , 0 , 0.2 )');
+                drawX = x;
+                drawY = (bottom - drawHeight) * 0.5;
+                this.fillRectWithTitle(drawX, drawY, drawWidth, drawHeight, 'left-middle', engine.ELayout.LEFT_MIDDLE, 'rgba( 0 , 255 , 0 , 0.2 )');
+            }
+        };
+        TestCanvas2DApplication.prototype.loadAndDrawImage = function (url) {
+            var _this = this;
+            var img = document.createElement('img');
+            img.src = url;
+            img.onload = function (evt) {
+                if (_this.context2D !== null) {
+                    console.log(url + "\u5C3A\u5BF8\u4E3A" + img.width + "," + img.height);
+                    _this.context2D.drawImage(img, 10, 10);
+                    _this.context2D.drawImage(img, img.width + 30, 10, 200, img.height);
+                    _this.context2D.drawImage(img, 44, 6, 162, 175, 200, img.height + 30, 200, 130);
+                }
+            };
+        };
+        TestCanvas2DApplication.Colors = [
+            'aqua',
+            'black',
+            'blue',
+            'fuchsia',
+            'gray',
+            'green',
+            'lime',
+            'maroon',
+            'navy',
+            'olive',
+            'orange',
+            'purple',
+            'red',
+            'silver',
+            'teal',
+            'yellow',
+            'white' //白色
+        ];
         return TestCanvas2DApplication;
     }(engine.Canvas2DApplication));
     engine.TestCanvas2DApplication = TestCanvas2DApplication;
@@ -698,6 +1091,35 @@ var engine;
 })(engine || (engine = {}));
 var engine;
 (function (engine) {
+    var ELayout;
+    (function (ELayout) {
+        ELayout[ELayout["LEFT_TOP"] = 0] = "LEFT_TOP";
+        ELayout[ELayout["RIGHT_TOP"] = 1] = "RIGHT_TOP";
+        ELayout[ELayout["RIGHT_BOTTOM"] = 2] = "RIGHT_BOTTOM";
+        ELayout[ELayout["LEFT_BOTTOM"] = 3] = "LEFT_BOTTOM";
+        ELayout[ELayout["CENTER_MIDDLE"] = 4] = "CENTER_MIDDLE";
+        ELayout[ELayout["CENTER_TOP"] = 5] = "CENTER_TOP";
+        ELayout[ELayout["RIGHT_MIDDLE"] = 6] = "RIGHT_MIDDLE";
+        ELayout[ELayout["CENTER_BOTTOM"] = 7] = "CENTER_BOTTOM";
+        ELayout[ELayout["LEFT_MIDDLE"] = 8] = "LEFT_MIDDLE";
+    })(ELayout = engine.ELayout || (engine.ELayout = {}));
+})(engine || (engine = {}));
+var engine;
+(function (engine) {
+    var ETextLayout;
+    (function (ETextLayout) {
+        ETextLayout[ETextLayout["LEFT_TOP"] = 0] = "LEFT_TOP";
+        ETextLayout[ETextLayout["RIGHT_TOP"] = 1] = "RIGHT_TOP";
+        ETextLayout[ETextLayout["RIGHT_BOTTOM"] = 2] = "RIGHT_BOTTOM";
+        ETextLayout[ETextLayout["LEFT_BOTTOM"] = 3] = "LEFT_BOTTOM";
+        ETextLayout[ETextLayout["CENTER_MIDDLE"] = 4] = "CENTER_MIDDLE";
+        ETextLayout[ETextLayout["CENTER_TOP"] = 5] = "CENTER_TOP";
+        ETextLayout[ETextLayout["CENTER_BOTTOM"] = 6] = "CENTER_BOTTOM";
+        ETextLayout[ETextLayout["LETT_MIDDLE"] = 7] = "LETT_MIDDLE";
+    })(ETextLayout = engine.ETextLayout || (engine.ETextLayout = {}));
+})(engine || (engine = {}));
+var engine;
+(function (engine) {
     var ETokenType;
     (function (ETokenType) {
         ETokenType[ETokenType["NONE"] = 0] = "NONE";
@@ -758,6 +1180,65 @@ var engine;
         return CanvasMouseEvent;
     }(engine.CanvasInputEvent));
     engine.CanvasMouseEvent = CanvasMouseEvent;
+})(engine || (engine = {}));
+var engine;
+(function (engine) {
+    var Rectangle = /** @class */ (function () {
+        function Rectangle(orign, size) {
+            if (orign === void 0) { orign = new engine.vec2(); }
+            if (size === void 0) { size = new engine.Size(1, 1); }
+            this.origin = orign;
+            this.size = size;
+        }
+        // public isEmpty(): boolean {
+        //     let area: number = this.size.width * this.size.height;
+        //     if (Math2D.isEquals(area, 0) === true) {
+        //         return true;
+        //     } else {
+        //         return false;
+        //     }
+        // }
+        Rectangle.create = function (x, y, w, h) {
+            if (x === void 0) { x = 0; }
+            if (y === void 0) { y = 0; }
+            if (w === void 0) { w = 1; }
+            if (h === void 0) { h = 1; }
+            var origin = new engine.vec2(x, y);
+            var size = new engine.Size(w, h);
+            return new Rectangle(origin, size);
+        };
+        return Rectangle;
+    }());
+    engine.Rectangle = Rectangle;
+})(engine || (engine = {}));
+var engine;
+(function (engine) {
+    var Size = /** @class */ (function () {
+        function Size(w, h) {
+            if (w === void 0) { w = 1; }
+            if (h === void 0) { h = 1; }
+            this.values = new Float32Array([w, h]);
+        }
+        Object.defineProperty(Size.prototype, "width", {
+            get: function () { return this.values[0]; },
+            set: function (value) { this.values[0] = value; },
+            enumerable: true,
+            configurable: true
+        });
+        Object.defineProperty(Size.prototype, "height", {
+            get: function () { return this.values[1]; },
+            set: function (value) { this.values[1] = value; },
+            enumerable: true,
+            configurable: true
+        });
+        Size.create = function (w, h) {
+            if (w === void 0) { w = 1; }
+            if (h === void 0) { h = 1; }
+            return new Size(w, h);
+        };
+        return Size;
+    }());
+    engine.Size = Size;
 })(engine || (engine = {}));
 var engine;
 (function (engine) {

@@ -1,4 +1,14 @@
 module engine {
+    type Repeatition = "repeat" | "repeat-x" | "repeat-y" | "no-repeat";
+    type TextAlign = "start" | "left" | "center" | "right" | "end";
+    type TextBaseline = "alphabetic" | "hanging" | "top" | "middle" | "bottom";
+    type FontType = "10px sans-serif" | "15px sans-serif" | "20px sans-serif" | "25px sans-serif";
+    type FontStyle = "normal" | "italic" | "oblique";
+    type FontVariant = "normal" | "small-caps";
+    type FontWeight = "normal" | "bold" | "bolder" | "lighter" | "100" | "200" | "300" | "400" | "500" | "600" | "700" | "800" | "900";
+    type FontSize = "10px" | "12px" | "16px" | "18px" | "24px" | "50%" | "75%" | "100%" | "125%" | "150%" | "xx-small" | "x-small" | "small" | "medium" | "large" | "x-large" | "xx-large";
+    type FontFamily = "sans-serif" | "serif" | "courier" | "fantasy" | "monospace";
+
     export class TestCanvas2DApplication extends Canvas2DApplication {
         constructor(canvas: HTMLCanvasElement) {
             super(canvas);
@@ -60,16 +70,426 @@ module engine {
 
         timeCallback(id: number, data: any) {
             this._updateLineDashOffset();
-            this.drawRect(10, 10, this.canvas.width - 20, this.canvas.height - 20);
+            // this.drawRect(10, 10, this.canvas.width - 20, this.canvas.height - 20);
+
         }
 
         start() {
             console.log("start");
+            this.strokeGrid();
+            // this.fillLinearRect(10, 10, 100, 100);
+            // this.fillRadialGradient(10, 110, 100, 100);
+            // this.fillPattern(10, 210, 400, 400);
+            // this.printTextStates();
+            // this.fillText("hello world",100,100);
+            // this.testCanvas2DTextLayout();
+            // this.testMyTextLayout();
+            this.loadAndDrawImage("./assets/test.jpg");
             this.addTimer((id: number, data: any): void => {
                 this.timeCallback(id, data);
             }, 0.05);
             super.start();
         }
+
+        static Colors: string[] = [
+            'aqua',    //浅绿色
+            'black',   //黑色
+            'blue',    //蓝色 
+            'fuchsia', //紫红色
+            'gray',     //灰色
+            'green',   //绿色
+            'lime',    //绿黄色
+            'maroon',  //褐红色
+            'navy',    //海军蓝
+            'olive',   //橄榄色
+            'orange',  //橙色
+            'purple',  //紫色
+            'red',      //红色
+            'silver',  //银灰色
+            'teal',    //蓝绿色
+            'yellow',   //黄色
+            'white'   //白色
+        ];
+
+        private _linearGradient!: CanvasGradient;
+        fillLinearRect(x: number, y: number, w: number, h: number): void {
+            if (this.context2D !== null) {
+                this.context2D.save();
+                if (this._linearGradient === undefined) {
+                    this._linearGradient = this.context2D.createLinearGradient(x, y, x + w, y);
+                    // this . _linearGradient = this . context2D . createLinearGradient ( x , y , x , y + h ) ;
+                    // this . _linearGradient = this . context2D . createLinearGradient ( x , y , x + w , y + h ) ;
+                    // this . _linearGradient = this . context2D . createLinearGradient ( x + w , y + h , x , y) ;
+                    this._linearGradient.addColorStop(0.0, 'grey');
+                    this._linearGradient.addColorStop(0.25, 'rgba( 255 , 0 , 0 , 1 ) ');
+                    this._linearGradient.addColorStop(0.5, 'green');
+                    this._linearGradient.addColorStop(0.75, '#0000FF');
+                    this._linearGradient.addColorStop(1.0, 'black');
+                }
+                this.context2D.fillStyle = this._linearGradient;
+                this.context2D.beginPath();
+                this.context2D.rect(x, y, w, h);
+                this.context2D.fill();
+                this.context2D.restore();
+            }
+
+        }
+
+        private _radialGradient!: CanvasGradient;
+        fillRadialGradient(x: number, y: number, w: number, h: number): void {
+            if (this.context2D !== null) {
+                this.context2D.save();
+                if (this._radialGradient === undefined) {
+                    let centX: number = x + w * 0.5;
+                    let centY: number = y + h * 0.5;
+                    let radius: number = Math.min(w, h);
+                    radius *= 0.5;
+                    this._radialGradient = this.context2D.createRadialGradient(centX, centY, radius * 0.1, centX, centY, radius);
+                    this._radialGradient.addColorStop(0.0, 'black');
+                    this._radialGradient.addColorStop(0.25, 'rgba( 255 , 0 , 0 , 1 ) ');
+                    this._radialGradient.addColorStop(0.5, 'green');
+                    this._radialGradient.addColorStop(0.75, '#0000FF');
+                    this._radialGradient.addColorStop(1.0, 'white');
+                }
+                this.context2D.fillStyle = this._radialGradient;
+                this.context2D.beginPath();
+                this.context2D.rect(x, y, w, h);
+                this.context2D.fill();
+                this.context2D.restore();
+            }
+        }
+
+        private _pattern!: CanvasPattern;
+        fillPattern(x: number, y: number, w: number, h: number, repeat: Repeatition = "repeat"): void {
+            if (this.context2D !== null) {
+                this.context2D.save();
+                if (this._pattern === undefined) {
+                    let img: HTMLImageElement = document.createElement('img') as HTMLImageElement;
+                    img.src = './assets/test.jpg';
+                    img.onload = (ev: Event): void => {
+                        if (this.context2D !== null) {
+                            this._pattern = this.context2D.createPattern(img, repeat)!;
+                            if (this._pattern) {
+                                this.context2D.fillStyle = this._pattern;
+                            }
+                            this.context2D.beginPath();
+                            this.context2D.rect(x, y, w, h);
+                            this.context2D.fill();
+                            this.context2D.restore();
+                        }
+                    }
+                } else {
+                    this.context2D.fillStyle = this._pattern;
+                    this.context2D.beginPath();
+                    this.context2D.rect(x, y, w, h);
+                    this.context2D.fill();
+                    this.context2D.restore();
+                }
+
+            }
+        }
+
+        fillCircle(x: number, y: number, radius: number, fillStyle: string | CanvasGradient | CanvasPattern = "red"): void {
+            if (this.context2D !== null) {
+                this.context2D.save();
+                this.context2D.fillStyle = fillStyle;
+                this.context2D.beginPath();
+                this.context2D.arc(x, y, radius, 0, Math.PI * 2);
+                this.context2D.fill();
+                this.context2D.restore();
+            }
+        }
+
+        strokeLine(x0: number, y0: number, x1: number, y1: number): void {
+            if (this.context2D !== null) {
+                this.context2D.beginPath();
+                this.context2D.moveTo(x0, y0);
+                this.context2D.lineTo(x1, y1);
+                this.context2D.stroke();
+            }
+        }
+
+        strokeCoord(orginX: number, orginY: number, width: number, height: number, lineWidth: number = 3): void {
+            if (this.context2D !== null) {
+                this.context2D.save();
+                this.context2D.lineWidth = lineWidth;
+                this.context2D.strokeStyle = 'red';
+                this.strokeLine(orginX, orginY, orginX + width, orginY);
+                this.context2D.strokeStyle = 'blue';
+                this.strokeLine(orginX, orginY, orginX, orginY + height);
+                this.context2D.restore();
+            }
+        }
+
+        strokeRect(x: number, y: number, w: number, h: number, color: string = 'black'): void {
+            if (this.context2D !== null) {
+                this.context2D.save();
+                this.context2D.strokeStyle = color;
+                this.context2D.beginPath();
+                this.context2D.moveTo(x, y);
+                this.context2D.lineTo(x + w, y);
+                this.context2D.lineTo(x + w, y + h);
+                this.context2D.lineTo(x, y + h);
+                this.context2D.closePath();
+                this.context2D.stroke();
+                this.context2D.restore();
+            }
+        }
+
+        strokeGrid(color: string = "grey", interval: number = 10): void {
+            if (this.context2D !== null) {
+                this.context2D.save();
+                this.context2D.strokeStyle = color;
+                this.context2D.lineWidth = 0.5;
+                for (let i: number = interval + 0.5; i < this.canvas.width; i += interval) {
+                    this.strokeLine(i, 0, i, this.canvas.height);
+                }
+                for (let i: number = interval + 0.5; i < this.canvas.height; i += interval) {
+                    this.strokeLine(0, i, this.canvas.width, i);
+                }
+                this.context2D.restore();
+                this.fillCircle(0, 0, 5, 'green');
+                this.strokeCoord(0, 0, this.canvas.width, this.canvas.height);
+            }
+        }
+
+        printTextStates(): void {
+            if (this.context2D !== null) {
+                console.log("=======TextState========");
+                console.log(`font：${this.context2D.font}`);
+                console.log(`textAlign：${this.context2D.textAlign}`);
+                console.log(`textBaseline:${this.context2D.textBaseline}`);
+            }
+        }
+
+        fillText(text: string, x: number, y: number, color: string = "black", align: TextAlign = "left", baseline: TextBaseline = "top", font: FontType = '10px sans-serif'): void {
+            if (this.context2D !== null) {
+                this.context2D.save();
+                this.context2D.textAlign = align;
+                this.context2D.textBaseline = baseline;
+                this.context2D.font = font;
+                this.context2D.fillStyle = color;
+                this.context2D.fillText(text, x, y);
+                this.context2D.restore();
+            }
+        }
+
+        calcTextSize(text: string, char: string = 'W', scale: number = 0.5): Size {
+            if (this.context2D !== null) {
+                let size: Size = new Size();
+                size.width = this.context2D.measureText(text).width;
+                let w: number = this.context2D.measureText(char).width;
+                size.height = w + w * scale;
+                return size;
+            }
+
+            alert(" context2D 渲染上下文为null ");
+            throw new Error(" context2D 渲染上下文为null ");
+        }
+
+        testCanvas2DTextLayout(): void {
+            let x: number = 20;
+            let y: number = 20;
+            let width: number = this.canvas.width - x * 2;
+            let height: number = this.canvas.height - y * 2;
+            let drawX: number = x;
+            let drawY: number = y;
+            let radius: number = 3;
+
+            // this.fillRectWithTitle( x, y, width, height );
+            this.fillText("left-top", drawX, drawY, 'black', 'left', 'top' /*, '20px sans-serif' */);
+            this.fillCircle(drawX, drawY, radius, 'black');
+
+            drawX = x + width;
+            drawY = y;
+            this.fillText("right-top", drawX, drawY, 'black', 'right', 'top' /* , '20px sans-serif' */);
+            this.fillCircle(drawX, drawY, radius, 'black');
+
+            drawX = x + width;
+            drawY = y + height;
+            this.fillText("right-bottom", drawX, drawY, 'black', 'right', 'bottom' /* , '20px sans-serif' */);
+            this.fillCircle(drawX, drawY, radius, 'black');
+
+            drawX = x;
+            drawY = y + height;
+            this.fillText("left-bottom", drawX, drawY, 'black', 'left', 'bottom' /* , '20px sans-serif' */);
+            this.fillCircle(drawX, drawY, radius, 'black');
+
+            drawX = x + width * 0.5;
+            drawY = y + height * 0.5;
+            this.fillText("center-middle", drawX, drawY, 'black', 'center', 'middle' /* , '20px sans-serif' */);
+            this.fillCircle(drawX, drawY, radius, 'red');
+
+            drawX = x + width * 0.5;
+            drawY = y;
+            this.fillText("center-top", drawX, drawY, 'blue', 'center', 'top' /* , '20px sans-serif' */);
+            this.fillCircle(drawX, drawY, radius, 'black');
+
+            drawX = x + width;
+            drawY = y + height * 0.5;
+            this.fillText("right-middle", drawX, drawY, 'blue', 'right', 'middle' /* , '20px sans-serif' */);
+            this.fillCircle(drawX, drawY, radius, 'black');
+
+            drawX = x + width * 0.5;
+            drawY = y + height;
+            this.fillText("center-bottom", drawX, drawY, 'blue', 'center', 'bottom');
+            this.fillCircle(drawX, drawY, radius, 'black');
+
+            drawX = x;
+            drawY = y + height * 0.5;
+            this.fillText("left-middle", drawX, drawY, 'blue', 'left', 'middle' /* , '20px sans-serif' */);
+            this.fillCircle(drawX, drawY, radius, 'black');
+        }
+
+        calcLocalTextRectangle(layout: ELayout, text: string, parentWidth: number, parentHeight: number): Rectangle {
+            let s: Size = this.calcTextSize(text);
+            let o: vec2 = vec2.create();
+            let left: number = 0;
+            let top: number = 0;
+            let right: number = parentWidth - s.width;
+            let bottom: number = parentHeight - s.height;
+            let center: number = right * 0.5;
+            let middle: number = bottom * 0.5;
+            switch (layout) {
+                case ELayout.LEFT_TOP:
+                    o.x = left;
+                    o.y = top;
+                    break;
+                case ELayout.RIGHT_TOP:
+                    o.x = right;
+                    o.y = top;
+                    break;
+                case ELayout.RIGHT_BOTTOM:
+                    o.x = right;
+                    o.y = bottom;
+                    break;
+                case ELayout.LEFT_BOTTOM:
+                    o.x = left;
+                    o.y = bottom;
+                    break;
+                case ELayout.CENTER_MIDDLE:
+                    o.x = center;
+                    o.y = middle;
+                    break;
+                case ELayout.CENTER_TOP:
+                    o.x = center;
+                    o.y = 0;
+                    break;
+                case ELayout.RIGHT_MIDDLE:
+                    o.x = right;
+                    o.y = middle;
+                    break;
+                case ELayout.CENTER_BOTTOM:
+                    o.x = center;
+                    o.y = bottom;
+                    break;
+                case ELayout.LEFT_MIDDLE:
+                    o.x = left;
+                    o.y = middle;
+                    break;
+            }
+            return new Rectangle(o, s);
+        }
+
+        fillRectWithTitle(x: number, y: number, width: number, height: number, title: string = '', layout: ELayout = ELayout.CENTER_MIDDLE, color: string = 'grey', showCoord: boolean = true): void {
+            if (this.context2D !== null) {
+
+                this.context2D.save();
+                this.context2D.fillStyle = color;
+                this.context2D.beginPath();
+                this.context2D.rect(x, y, width, height);
+                this.context2D.fill();
+                if (title.length !== 0) {
+                    let rect: Rectangle = this.calcLocalTextRectangle(layout, title, width, height);
+                    this.fillText(title, x + rect.origin.x, y + rect.origin.y, 'white', 'left', 'top' /*, '10px sans-serif'*/);
+                    this.strokeRect(x + rect.origin.x, y + rect.origin.y, rect.size.width, rect.size.height, 'rgba( 0 , 0 , 0 , 0.5 ) ');
+                    this.fillCircle(x + rect.origin.x, y + rect.origin.y, 2);
+                }
+                if (showCoord) {
+                    this.strokeCoord(x, y, width + 20, height + 20);
+                    this.fillCircle(x, y, 3);
+                }
+
+                this.context2D.restore();
+            }
+        }
+
+        makeFontString(size: FontSize = '10px',
+            weight: FontWeight = 'normal',
+            style: FontStyle = 'normal',
+            variant: FontVariant = 'normal',
+            family: FontFamily = 'sans-serif',
+        ): string {
+            let strs: string[] = [];
+            strs.push(style);
+            strs.push(variant);
+            strs.push(weight);
+            strs.push(size);
+            strs.push(family);
+            let ret: string = strs.join(" ");
+            console.log(ret);
+            return ret;
+        }
+
+        testMyTextLayout(font: string = this.makeFontString("10px", "normal", "normal", "normal", 'sans-serif')): void {
+
+            let x: number = 20;
+            let y: number = 20;
+            let width: number = this.canvas.width - x * 2;
+            let height: number = this.canvas.height - y * 2;
+            let right: number = x + width;
+            let bottom: number = y + height;
+
+            let drawX: number = x;
+            let drawY: number = y;
+            let drawWidth: number = 150;
+            let drawHeight: number = 50;
+
+            if (this.context2D !== null) {
+                this.context2D.save();
+                this.context2D.font = font;
+                this.fillRectWithTitle(x, y, width, height);
+                this.fillRectWithTitle(drawX, drawY, drawWidth, drawHeight, 'left-top', ELayout.LEFT_TOP, 'rgba( 255 , 255 , 0 , 0.2 )');
+                drawX = right - drawWidth;
+                drawY = y;
+                this.fillRectWithTitle(drawX, drawY, drawWidth, drawHeight, 'right-top', ELayout.RIGHT_TOP, 'rgba( 255 , 255 , 0 , 0.2 )');
+                drawX = right - drawWidth;
+                drawY = bottom - drawHeight;
+                this.fillRectWithTitle(drawX, drawY, drawWidth, drawHeight, 'right-bottom', ELayout.RIGHT_BOTTOM, 'rgba( 255 , 255 , 0 , 0.2 )');
+                drawX = x;
+                drawY = bottom - drawHeight;
+                this.fillRectWithTitle(drawX, drawY, drawWidth, drawHeight, 'left-bottom', ELayout.LEFT_BOTTOM, 'rgba( 255 , 255 , 0 , 0.2 )');
+                drawX = (right - drawWidth) * 0.5;
+                drawY = (bottom - drawHeight) * 0.5;
+                this.fillRectWithTitle(drawX, drawY, drawWidth, drawHeight, 'center-middle', ELayout.CENTER_MIDDLE, 'rgba( 255 , 0 , 0 , 0.2 )');
+                drawX = (right - drawWidth) * 0.5;
+                drawY = y;
+                this.fillRectWithTitle(drawX, drawY, drawWidth, drawHeight, 'center-top', ELayout.CENTER_TOP, 'rgba( 0 , 255 , 0 , 0.2 )');
+                drawX = (right - drawWidth);
+                drawY = (bottom - drawHeight) * 0.5;
+                this.fillRectWithTitle(drawX, drawY, drawWidth, drawHeight, 'right-middle', ELayout.RIGHT_MIDDLE, 'rgba( 0 , 255 , 0 , 0.2 )');
+                drawX = (right - drawWidth) * 0.5;
+                drawY = (bottom - drawHeight);
+                this.fillRectWithTitle(drawX, drawY, drawWidth, drawHeight, 'center-bottom', ELayout.CENTER_BOTTOM, 'rgba( 0 , 255 , 0 , 0.2 )');
+                drawX = x;
+                drawY = (bottom - drawHeight) * 0.5;
+                this.fillRectWithTitle(drawX, drawY, drawWidth, drawHeight, 'left-middle', ELayout.LEFT_MIDDLE, 'rgba( 0 , 255 , 0 , 0.2 )');
+            }
+        }
+
+        loadAndDrawImage(url:string):void{
+            let img:HTMLImageElement = document.createElement('img');
+            img.src = url;
+            img.onload = (evt:Event) =>{
+                if(this.context2D !== null){
+                    console.log(`${url}尺寸为${img.width},${img.height}`);
+                    this.context2D.drawImage(img,10,10);
+                    this.context2D.drawImage(img,img.width+30,10,200,img.height);
+                    this . context2D . drawImage ( img , 44 , 6 , 162 , 175 , 200 , img . height + 30 , 200 , 130  ) ;
+                }
+            }
+        }
+
 
     }
 
