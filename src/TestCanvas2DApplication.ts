@@ -9,10 +9,29 @@ module engine {
     type FontSize = "10px" | "12px" | "16px" | "18px" | "24px" | "50%" | "75%" | "100%" | "125%" | "150%" | "xx-small" | "x-small" | "small" | "medium" | "large" | "x-large" | "xx-large";
     type FontFamily = "sans-serif" | "serif" | "courier" | "fantasy" | "monospace";
 
+
     export class TestCanvas2DApplication extends Canvas2DApplication {
         constructor(canvas: HTMLCanvasElement) {
             super(canvas);
         }
+
+        private _mouseX: number = 0;
+        private _mouseY: number = 0;
+        protected dispatchMouseMove(evt: CanvasMouseEvent): void {
+            this._mouseX = evt.canvasPosition.x;
+            this._mouseY = evt.canvasPosition.y;
+        }
+
+        render(): void {
+            if (this.context2D !== null) {
+                this.context2D.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                this.strokeGrid();
+                this.drawCanvasCoordCenter();
+
+                this.drawCoordInfo(`[${this._mouseX},${this._mouseY}]`, this._mouseX, this._mouseY);
+            }
+        }
+
         drawRect(x: number, y: number, w: number, h: number): void {
             if (this.context2D !== null) {
                 this.context2D.save();
@@ -76,7 +95,7 @@ module engine {
 
         start() {
             console.log("start");
-            this.strokeGrid();
+            // this.strokeGrid();
             // this.fillLinearRect(10, 10, 100, 100);
             // this.fillRadialGradient(10, 110, 100, 100);
             // this.fillPattern(10, 210, 400, 400);
@@ -84,7 +103,12 @@ module engine {
             // this.fillText("hello world",100,100);
             // this.testCanvas2DTextLayout();
             // this.testMyTextLayout();
-            this.loadAndDrawImage("./assets/test.jpg");
+            // this.loadAndDrawImage("./assets/test.jpg");
+            // this.drawColorCanvas();
+            // this.setShadowState();
+            // this.testChangePartCanvasImageData();
+            // this.printShadowStates();
+            // this.printAllRenderStates();
             this.addTimer((id: number, data: any): void => {
                 this.timeCallback(id, data);
             }, 0.05);
@@ -186,6 +210,18 @@ module engine {
                     this.context2D.restore();
                 }
 
+            }
+        }
+
+        public fillRectangleWithColor(rect: Rectangle, color: string): void {
+            if (rect.isEmpty()) {
+                return;
+            }
+            if (this.context2D !== null) {
+                this.context2D.save();
+                this.context2D.fillStyle = color;
+                this.context2D.fillRect(rect.origin.x, rect.origin.y, rect.size.width, rect.size.height);
+                this.context2D.restore();
             }
         }
 
@@ -477,20 +513,239 @@ module engine {
             }
         }
 
-        loadAndDrawImage(url:string):void{
-            let img:HTMLImageElement = document.createElement('img');
+        loadAndDrawImage(url: string): void {
+            let img: HTMLImageElement = document.createElement('img');
             img.src = url;
-            img.onload = (evt:Event) =>{
-                if(this.context2D !== null){
+            img.onload = (evt: Event) => {
+                if (this.context2D !== null) {
                     console.log(`${url}尺寸为${img.width},${img.height}`);
-                    this.context2D.drawImage(img,10,10);
-                    this.context2D.drawImage(img,img.width+30,10,200,img.height);
-                    this . context2D . drawImage ( img , 44 , 6 , 162 , 175 , 200 , img . height + 30 , 200 , 130  ) ;
+                    // this.context2D.drawImage(img, 10, 10);
+                    // this.context2D.drawImage(img, img.width + 30, 10, 200, img.height);
+                    // this.context2D.drawImage(img, 44, 6, 162, 175, 200, img.height + 30, 200, 130);
+                    // this . drawImage ( img , Rectangle .create ( 20, 20 , 540 , 300 ) , Rectangle . create ( 44 , 6 , 162 , 175 ) , EImageFillType . STRETCH ) ;
+                    this.drawImage(img, Rectangle.create(20, 20, 1000, 500), Rectangle.create(44, 6, 162, 175), EImageFillType.REPEAT);
                 }
             }
         }
 
+        drawImage(img: HTMLImageElement | HTMLCanvasElement, destRect: Rectangle, srcRect: Rectangle = Rectangle.create(0, 0, img.width, img.height), fillType: EImageFillType = EImageFillType.STRETCH) {
+            if (this.context2D === null) {
+                return false;
+            }
+            if (destRect.isEmpty()) {
+                return false;
+            }
+            if (srcRect.isEmpty()) {
+                return false;
+            }
+            if (fillType === EImageFillType.STRETCH) {
+                this.context2D.drawImage(img,
+                    srcRect.origin.x,
+                    srcRect.origin.y,
+                    srcRect.size.width,
+                    srcRect.size.height,
+                    destRect.origin.x,
+                    destRect.origin.y,
+                    destRect.size.width,
+                    destRect.size.height
+                );
+            } else {
+                this.fillRectangleWithColor(destRect, 'grey');
+                let rows: number = Math.ceil(destRect.size.width / srcRect.size.width);
+                let colums: number = Math.ceil(destRect.size.height / srcRect.size.height);
+                let left: number = 0;
+                let top: number = 0;
+                let right: number = 0;
+                let bottom: number = 0;
+                let width: number = 0;
+                let height: number = 0;
+                let destRight: number = destRect.origin.x + destRect.size.width;
+                let destBottom: number = destRect.origin.y + destRect.size.height;
+                if (fillType === EImageFillType.REPEAT_X) {
+                    colums = 1;
+                } else if (fillType === EImageFillType.REPEAT_Y) {
+                    rows = 1;
+                }
 
+                for (let i: number = 0; i < rows; i++) {
+                    for (let j: number = 0; j < colums; j++) {
+                        left = destRect.origin.x + i * srcRect.size.width;
+                        top = destRect.origin.y + j * srcRect.size.height;
+
+                        width = srcRect.size.width;
+                        height = srcRect.size.height;
+                        right = left + width;
+                        bottom = top + height;
+                        if (right > destRight) {
+                            width = srcRect.size.width - (right - destRight);
+                        }
+                        if (bottom > destBottom) {
+                            height = srcRect.size.height - (bottom - destBottom);
+                        }
+                        this.context2D.drawImage(img,
+                            srcRect.origin.x,
+                            srcRect.origin.y,
+                            width,
+                            height,
+                            left, top, width, height
+                        );
+                    }
+                }
+            }
+            return true;
+        }
+
+        getColorCanvas(amount: number = 32): HTMLCanvasElement {
+            let step: number = 4;
+            let canvas: HTMLCanvasElement = document.createElement("canvas");
+            canvas.width = amount * step;
+            canvas.height = amount * step;
+            let ctx: CanvasRenderingContext2D | null = canvas.getContext("2d");
+            if (ctx === null) {
+                throw new Error("离屏Canvas获取渲染上下文失败！");
+            }
+            for (let i = 0; i < step; i++) {
+                for (let j: number = 0; j < step; j++) {
+                    let idx: number = step * i + j;
+                    ctx.save();
+                    ctx.fillStyle = TestCanvas2DApplication.Colors[idx];
+                    ctx.fillRect(i * amount, j * amount, amount, amount);
+                    ctx.restore();
+                }
+            }
+
+            return canvas;
+        }
+
+        drawColorCanvas(): void {
+            let colorCanvas: HTMLCanvasElement = this.getColorCanvas();
+            this.drawImage(colorCanvas, Rectangle.create(100, 100, colorCanvas.width, colorCanvas.height));
+        }
+
+        testChangePartCanvasImageData(rRow: number = 2, rColum: number = 0, cRow: number = 1, cColum: number = 0, size: number = 32): void {
+            let colorCanvas: HTMLCanvasElement = this.getColorCanvas(size);
+            let ctx: CanvasRenderingContext2D | null = colorCanvas.getContext("2d");
+            if (ctx === null) {
+                throw new Error("Canvas获取渲染上下文失败！");
+            }
+            this.drawImage(colorCanvas, Rectangle.create(100, 100, colorCanvas.width, colorCanvas.height));
+            let imgData: ImageData = ctx.createImageData(size, size);
+
+            let data: Uint8ClampedArray = imgData.data;
+            let rbgaCount: number = data.length / 4;
+            for (let i = 0; i < rbgaCount; i++) {
+                data[i * 4 + 0] = 255;
+                data[i * 4 + 1] = 0;
+                data[i * 4 + 2] = 0;
+                data[i * 4 + 3] = 255;
+            }
+            ctx.putImageData(imgData, size * rColum, size * rRow, 0, 0, size, size);
+            imgData = ctx.getImageData(size * cColum, size * cRow, size, size);
+            data = imgData.data;
+            let component: number = 0;
+            for (let i: number = 0; i < imgData.width; i++) {
+                for (let j: number = 0; j < imgData.height; j++) {
+                    for (let k: number = 0; k < 4; k++) {
+                        let idx: number = (i * imgData.height + j) * 4 + k;
+                        component = data[idx];
+                        if (idx % 4 !== 3) {
+                            data[idx] = 255 - component;
+                        }
+                    }
+                }
+            }
+            ctx.putImageData(imgData, size * cColum, size * cRow, 0, 0, size, size);
+            this.drawImage(colorCanvas, Rectangle.create(300, 100, colorCanvas.width, colorCanvas.height));
+        }
+
+        printShadowStates(): void {
+            if (this.context2D !== null) {
+                console.log("======ShadowState======");
+                console.log(" shadowBlur : " + this.context2D.shadowBlur);
+                console.log(" shadowColor : " + this.context2D.shadowColor);
+                console.log(" shadowOffsetX : " + this.context2D.shadowOffsetX);
+                console.log(" shadowOffsetY : " + this.context2D.shadowOffsetY);
+            }
+        }
+
+        setShadowState(shadowBlur: number = 5, shadowColor: string = "rgba( 127 , 127 , 127 , 0.5 )", shadowOffsetX: number = 10, shadowOffsetY: number = 10): void {
+            if (this.context2D !== null) {
+                this.context2D.shadowBlur = shadowBlur;
+                this.context2D.shadowColor = shadowColor;
+                this.context2D.shadowOffsetX = shadowOffsetX;
+                this.context2D.shadowOffsetY = shadowOffsetY;
+            }
+        }
+
+        printAllRenderStates(): void {
+            if (this.context2D !== null) {
+                console.log("======LineState======");
+                console.log(" lineWidth : " + this.context2D.lineWidth);
+                console.log(" lineCap : " + this.context2D.lineCap);
+                console.log(" lineJoin : " + this.context2D.lineJoin);
+                console.log(" miterLimit : " + this.context2D.miterLimit);
+
+                console.log("======LineDashState======");
+                console.log(" lineDashOffset : " + this.context2D.lineDashOffset);
+
+                console.log("======ShadowState======");
+                console.log(" shadowBlur : " + this.context2D.shadowBlur);
+                console.log(" shadowColor : " + this.context2D.shadowColor);
+                console.log(" shadowOffsetX : " + this.context2D.shadowOffsetX);
+                console.log(" shadowOffsetY : " + this.context2D.shadowOffsetY);
+
+                console.log("*********TextState**********");
+                console.log(" font : " + this.context2D.font);
+                console.log(" textAlign : " + this.context2D.textAlign);
+                console.log(" textBaseline : " + this.context2D.textBaseline);
+
+                console.log("*********RenderState**********");
+                console.log(" strokeStyle : " + this.context2D.strokeStyle);
+                console.log(" fillStyle : " + this.context2D.fillStyle);
+                console.log(" globalAlpha : " + this.context2D.globalAlpha);
+                console.log(" globalCompositeOperation : " + this.context2D.globalCompositeOperation);
+            }
+        }
+
+        /**
+         * 
+         * TransformApplication
+         * 
+         */
+
+        drawCanvasCoordCenter(): void {
+            if (this.context2D === null) {
+                return;
+            }
+            let halfWidth: number = this.canvas.width * 0.5;
+            let halfHeight: number = this.canvas.height * 0.5;
+
+            this.context2D.save();
+            this.context2D.lineWidth = 2;
+            this.context2D.strokeStyle = 'rgba( 255 , 0 , 0 , 0.5 ) ';
+
+            this.strokeLine(0, halfHeight, this.canvas.width, halfHeight);
+            this.context2D.strokeStyle = 'rgba( 0 , 0 , 255 , 0.5 )';
+
+            this.strokeLine(halfWidth, 0, halfWidth, this.canvas.height);
+            this.context2D.restore();
+
+            this.fillCircle(halfWidth, halfHeight, 5, 'rgba( 0 , 0 , 0 , 0.5 ) ');
+        }
+
+        drawCoordInfo(info: string, x: number, y: number): void {
+            this.fillText(info, x, y, 'black', 'center', 'bottom');
+        }
+
+        distance(x0: number, y0: number, x1: number, y1: number): number {
+            let diffX: number = x1 - x0;
+            let diffY: number = y1 - y0;
+            return Math.sqrt(diffX * diffX + diffY * diffY);
+        }
+
+        doTransform(): void {
+
+        }
     }
 
 }

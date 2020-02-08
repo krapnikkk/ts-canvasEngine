@@ -8,14 +8,14 @@ module engine {
             this.size = size;
         }
  
-        // public isEmpty(): boolean {
-        //     let area: number = this.size.width * this.size.height;
-        //     if (Math2D.isEquals(area, 0) === true) {
-        //         return true;
-        //     } else {
-        //         return false;
-        //     }
-        // }
+        public isEmpty(): boolean {
+            let area: number = this.size.width * this.size.height;
+            if (Math2D.isEquals(area, 0) === true) {
+                return true;
+            } else {
+                return false;
+            }
+        }
 
         public static create(x: number = 0, y: number = 0, w: number = 1, h: number = 1): Rectangle {
             let origin: vec2 = new vec2(x, y);

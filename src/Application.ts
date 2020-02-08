@@ -19,7 +19,7 @@ module engine {
             window.addEventListener("keyup", this, false);
             window.addEventListener("keypress", this, false);
             this._isMouseDown = false;
-            this._isSupportMouseMove = false;
+            this._isSupportMouseMove = true;
         }
         start(): void {
             if (!this._start) {

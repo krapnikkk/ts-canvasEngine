@@ -29,7 +29,7 @@ var engine;
             window.addEventListener("keyup", this, false);
             window.addEventListener("keypress", this, false);
             this._isMouseDown = false;
-            this._isSupportMouseMove = false;
+            this._isSupportMouseMove = true;
         }
         Application.prototype.start = function () {
             if (!this._start) {
@@ -318,9 +318,23 @@ var engine;
         __extends(TestCanvas2DApplication, _super);
         function TestCanvas2DApplication(canvas) {
             var _this = _super.call(this, canvas) || this;
+            _this._mouseX = 0;
+            _this._mouseY = 0;
             _this._lineDashOffset = 0;
             return _this;
         }
+        TestCanvas2DApplication.prototype.dispatchMouseMove = function (evt) {
+            this._mouseX = evt.canvasPosition.x;
+            this._mouseY = evt.canvasPosition.y;
+        };
+        TestCanvas2DApplication.prototype.render = function () {
+            if (this.context2D !== null) {
+                this.context2D.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                this.strokeGrid();
+                this.drawCanvasCoordCenter();
+                this.drawCoordInfo("[" + this._mouseX + "," + this._mouseY + "]", this._mouseX, this._mouseY);
+            }
+        };
         TestCanvas2DApplication.prototype.drawRect = function (x, y, w, h) {
             if (this.context2D !== null) {
                 this.context2D.save();
@@ -371,7 +385,7 @@ var engine;
         TestCanvas2DApplication.prototype.start = function () {
             var _this = this;
             console.log("start");
-            this.strokeGrid();
+            // this.strokeGrid();
             // this.fillLinearRect(10, 10, 100, 100);
             // this.fillRadialGradient(10, 110, 100, 100);
             // this.fillPattern(10, 210, 400, 400);
@@ -379,7 +393,12 @@ var engine;
             // this.fillText("hello world",100,100);
             // this.testCanvas2DTextLayout();
             // this.testMyTextLayout();
-            this.loadAndDrawImage("./assets/test.jpg");
+            // this.loadAndDrawImage("./assets/test.jpg");
+            // this.drawColorCanvas();
+            // this.setShadowState();
+            // this.testChangePartCanvasImageData();
+            // this.printShadowStates();
+            // this.printAllRenderStates();
             this.addTimer(function (id, data) {
                 _this.timeCallback(id, data);
             }, 0.05);
@@ -456,6 +475,17 @@ var engine;
                     this.context2D.fill();
                     this.context2D.restore();
                 }
+            }
+        };
+        TestCanvas2DApplication.prototype.fillRectangleWithColor = function (rect, color) {
+            if (rect.isEmpty()) {
+                return;
+            }
+            if (this.context2D !== null) {
+                this.context2D.save();
+                this.context2D.fillStyle = color;
+                this.context2D.fillRect(rect.origin.x, rect.origin.y, rect.size.width, rect.size.height);
+                this.context2D.restore();
             }
         };
         TestCanvas2DApplication.prototype.fillCircle = function (x, y, radius, fillStyle) {
@@ -741,11 +771,206 @@ var engine;
             img.onload = function (evt) {
                 if (_this.context2D !== null) {
                     console.log(url + "\u5C3A\u5BF8\u4E3A" + img.width + "," + img.height);
-                    _this.context2D.drawImage(img, 10, 10);
-                    _this.context2D.drawImage(img, img.width + 30, 10, 200, img.height);
-                    _this.context2D.drawImage(img, 44, 6, 162, 175, 200, img.height + 30, 200, 130);
+                    // this.context2D.drawImage(img, 10, 10);
+                    // this.context2D.drawImage(img, img.width + 30, 10, 200, img.height);
+                    // this.context2D.drawImage(img, 44, 6, 162, 175, 200, img.height + 30, 200, 130);
+                    // this . drawImage ( img , Rectangle .create ( 20, 20 , 540 , 300 ) , Rectangle . create ( 44 , 6 , 162 , 175 ) , EImageFillType . STRETCH ) ;
+                    _this.drawImage(img, engine.Rectangle.create(20, 20, 1000, 500), engine.Rectangle.create(44, 6, 162, 175), engine.EImageFillType.REPEAT);
                 }
             };
+        };
+        TestCanvas2DApplication.prototype.drawImage = function (img, destRect, srcRect, fillType) {
+            if (srcRect === void 0) { srcRect = engine.Rectangle.create(0, 0, img.width, img.height); }
+            if (fillType === void 0) { fillType = engine.EImageFillType.STRETCH; }
+            if (this.context2D === null) {
+                return false;
+            }
+            if (destRect.isEmpty()) {
+                return false;
+            }
+            if (srcRect.isEmpty()) {
+                return false;
+            }
+            if (fillType === engine.EImageFillType.STRETCH) {
+                this.context2D.drawImage(img, srcRect.origin.x, srcRect.origin.y, srcRect.size.width, srcRect.size.height, destRect.origin.x, destRect.origin.y, destRect.size.width, destRect.size.height);
+            }
+            else {
+                this.fillRectangleWithColor(destRect, 'grey');
+                var rows = Math.ceil(destRect.size.width / srcRect.size.width);
+                var colums = Math.ceil(destRect.size.height / srcRect.size.height);
+                var left = 0;
+                var top_1 = 0;
+                var right = 0;
+                var bottom = 0;
+                var width = 0;
+                var height = 0;
+                var destRight = destRect.origin.x + destRect.size.width;
+                var destBottom = destRect.origin.y + destRect.size.height;
+                if (fillType === engine.EImageFillType.REPEAT_X) {
+                    colums = 1;
+                }
+                else if (fillType === engine.EImageFillType.REPEAT_Y) {
+                    rows = 1;
+                }
+                for (var i = 0; i < rows; i++) {
+                    for (var j = 0; j < colums; j++) {
+                        left = destRect.origin.x + i * srcRect.size.width;
+                        top_1 = destRect.origin.y + j * srcRect.size.height;
+                        width = srcRect.size.width;
+                        height = srcRect.size.height;
+                        right = left + width;
+                        bottom = top_1 + height;
+                        if (right > destRight) {
+                            width = srcRect.size.width - (right - destRight);
+                        }
+                        if (bottom > destBottom) {
+                            height = srcRect.size.height - (bottom - destBottom);
+                        }
+                        this.context2D.drawImage(img, srcRect.origin.x, srcRect.origin.y, width, height, left, top_1, width, height);
+                    }
+                }
+            }
+            return true;
+        };
+        TestCanvas2DApplication.prototype.getColorCanvas = function (amount) {
+            if (amount === void 0) { amount = 32; }
+            var step = 4;
+            var canvas = document.createElement("canvas");
+            canvas.width = amount * step;
+            canvas.height = amount * step;
+            var ctx = canvas.getContext("2d");
+            if (ctx === null) {
+                throw new Error("离屏Canvas获取渲染上下文失败！");
+            }
+            for (var i = 0; i < step; i++) {
+                for (var j = 0; j < step; j++) {
+                    var idx = step * i + j;
+                    ctx.save();
+                    ctx.fillStyle = TestCanvas2DApplication.Colors[idx];
+                    ctx.fillRect(i * amount, j * amount, amount, amount);
+                    ctx.restore();
+                }
+            }
+            return canvas;
+        };
+        TestCanvas2DApplication.prototype.drawColorCanvas = function () {
+            var colorCanvas = this.getColorCanvas();
+            this.drawImage(colorCanvas, engine.Rectangle.create(100, 100, colorCanvas.width, colorCanvas.height));
+        };
+        TestCanvas2DApplication.prototype.testChangePartCanvasImageData = function (rRow, rColum, cRow, cColum, size) {
+            if (rRow === void 0) { rRow = 2; }
+            if (rColum === void 0) { rColum = 0; }
+            if (cRow === void 0) { cRow = 1; }
+            if (cColum === void 0) { cColum = 0; }
+            if (size === void 0) { size = 32; }
+            var colorCanvas = this.getColorCanvas(size);
+            var ctx = colorCanvas.getContext("2d");
+            if (ctx === null) {
+                throw new Error("Canvas获取渲染上下文失败！");
+            }
+            this.drawImage(colorCanvas, engine.Rectangle.create(100, 100, colorCanvas.width, colorCanvas.height));
+            var imgData = ctx.createImageData(size, size);
+            var data = imgData.data;
+            var rbgaCount = data.length / 4;
+            for (var i = 0; i < rbgaCount; i++) {
+                data[i * 4 + 0] = 255;
+                data[i * 4 + 1] = 0;
+                data[i * 4 + 2] = 0;
+                data[i * 4 + 3] = 255;
+            }
+            ctx.putImageData(imgData, size * rColum, size * rRow, 0, 0, size, size);
+            imgData = ctx.getImageData(size * cColum, size * cRow, size, size);
+            data = imgData.data;
+            var component = 0;
+            for (var i = 0; i < imgData.width; i++) {
+                for (var j = 0; j < imgData.height; j++) {
+                    for (var k = 0; k < 4; k++) {
+                        var idx = (i * imgData.height + j) * 4 + k;
+                        component = data[idx];
+                        if (idx % 4 !== 3) {
+                            data[idx] = 255 - component;
+                        }
+                    }
+                }
+            }
+            ctx.putImageData(imgData, size * cColum, size * cRow, 0, 0, size, size);
+            this.drawImage(colorCanvas, engine.Rectangle.create(300, 100, colorCanvas.width, colorCanvas.height));
+        };
+        TestCanvas2DApplication.prototype.printShadowStates = function () {
+            if (this.context2D !== null) {
+                console.log("======ShadowState======");
+                console.log(" shadowBlur : " + this.context2D.shadowBlur);
+                console.log(" shadowColor : " + this.context2D.shadowColor);
+                console.log(" shadowOffsetX : " + this.context2D.shadowOffsetX);
+                console.log(" shadowOffsetY : " + this.context2D.shadowOffsetY);
+            }
+        };
+        TestCanvas2DApplication.prototype.setShadowState = function (shadowBlur, shadowColor, shadowOffsetX, shadowOffsetY) {
+            if (shadowBlur === void 0) { shadowBlur = 5; }
+            if (shadowColor === void 0) { shadowColor = "rgba( 127 , 127 , 127 , 0.5 )"; }
+            if (shadowOffsetX === void 0) { shadowOffsetX = 10; }
+            if (shadowOffsetY === void 0) { shadowOffsetY = 10; }
+            if (this.context2D !== null) {
+                this.context2D.shadowBlur = shadowBlur;
+                this.context2D.shadowColor = shadowColor;
+                this.context2D.shadowOffsetX = shadowOffsetX;
+                this.context2D.shadowOffsetY = shadowOffsetY;
+            }
+        };
+        TestCanvas2DApplication.prototype.printAllRenderStates = function () {
+            if (this.context2D !== null) {
+                console.log("======LineState======");
+                console.log(" lineWidth : " + this.context2D.lineWidth);
+                console.log(" lineCap : " + this.context2D.lineCap);
+                console.log(" lineJoin : " + this.context2D.lineJoin);
+                console.log(" miterLimit : " + this.context2D.miterLimit);
+                console.log("======LineDashState======");
+                console.log(" lineDashOffset : " + this.context2D.lineDashOffset);
+                console.log("======ShadowState======");
+                console.log(" shadowBlur : " + this.context2D.shadowBlur);
+                console.log(" shadowColor : " + this.context2D.shadowColor);
+                console.log(" shadowOffsetX : " + this.context2D.shadowOffsetX);
+                console.log(" shadowOffsetY : " + this.context2D.shadowOffsetY);
+                console.log("*********TextState**********");
+                console.log(" font : " + this.context2D.font);
+                console.log(" textAlign : " + this.context2D.textAlign);
+                console.log(" textBaseline : " + this.context2D.textBaseline);
+                console.log("*********RenderState**********");
+                console.log(" strokeStyle : " + this.context2D.strokeStyle);
+                console.log(" fillStyle : " + this.context2D.fillStyle);
+                console.log(" globalAlpha : " + this.context2D.globalAlpha);
+                console.log(" globalCompositeOperation : " + this.context2D.globalCompositeOperation);
+            }
+        };
+        /**
+         *
+         * TransformApplication
+         *
+         */
+        TestCanvas2DApplication.prototype.drawCanvasCoordCenter = function () {
+            if (this.context2D === null) {
+                return;
+            }
+            var halfWidth = this.canvas.width * 0.5;
+            var halfHeight = this.canvas.height * 0.5;
+            this.context2D.save();
+            this.context2D.lineWidth = 2;
+            this.context2D.strokeStyle = 'rgba( 255 , 0 , 0 , 0.5 ) ';
+            this.strokeLine(0, halfHeight, this.canvas.width, halfHeight);
+            this.context2D.strokeStyle = 'rgba( 0 , 0 , 255 , 0.5 )';
+            this.strokeLine(halfWidth, 0, halfWidth, this.canvas.height);
+            this.context2D.restore();
+            this.fillCircle(halfWidth, halfHeight, 5, 'rgba( 0 , 0 , 0 , 0.5 ) ');
+        };
+        TestCanvas2DApplication.prototype.drawCoordInfo = function (info, x, y) {
+            this.fillText(info, x, y, 'black', 'center', 'bottom');
+        };
+        TestCanvas2DApplication.prototype.distance = function (x0, y0, x1, y1) {
+            var diffX = x1 - x0;
+            var diffY = y1 - y0;
+            return Math.sqrt(diffX * diffX + diffY * diffY);
+        };
+        TestCanvas2DApplication.prototype.doTransform = function () {
         };
         TestCanvas2DApplication.Colors = [
             'aqua',
@@ -1076,6 +1301,16 @@ var engine;
 })(engine || (engine = {}));
 var engine;
 (function (engine) {
+    var EImageFillType;
+    (function (EImageFillType) {
+        EImageFillType[EImageFillType["STRETCH"] = 0] = "STRETCH";
+        EImageFillType[EImageFillType["REPEAT"] = 1] = "REPEAT";
+        EImageFillType[EImageFillType["REPEAT_X"] = 2] = "REPEAT_X";
+        EImageFillType[EImageFillType["REPEAT_Y"] = 3] = "REPEAT_Y";
+    })(EImageFillType = engine.EImageFillType || (engine.EImageFillType = {}));
+})(engine || (engine = {}));
+var engine;
+(function (engine) {
     var EInputEventType;
     (function (EInputEventType) {
         EInputEventType[EInputEventType["MOUSEEVENT"] = 0] = "MOUSEEVENT";
@@ -1183,6 +1418,30 @@ var engine;
 })(engine || (engine = {}));
 var engine;
 (function (engine) {
+    var EPSILON = 0.00001;
+    var PiBy180 = 0.0175; //Math.pI / 180.0
+    var Math2D = /** @class */ (function () {
+        function Math2D() {
+        }
+        Math2D.isEquals = function (left, right, espilon) {
+            if (espilon === void 0) { espilon = EPSILON; }
+            if (Math.abs(left - right) >= EPSILON) {
+                return false;
+            }
+            return true;
+        };
+        Math2D.toRadian = function (degree) {
+            return degree * PiBy180;
+        };
+        Math2D.toDegree = function (radian) {
+            return radian / PiBy180;
+        };
+        return Math2D;
+    }());
+    engine.Math2D = Math2D;
+})(engine || (engine = {}));
+var engine;
+(function (engine) {
     var Rectangle = /** @class */ (function () {
         function Rectangle(orign, size) {
             if (orign === void 0) { orign = new engine.vec2(); }
@@ -1190,14 +1449,15 @@ var engine;
             this.origin = orign;
             this.size = size;
         }
-        // public isEmpty(): boolean {
-        //     let area: number = this.size.width * this.size.height;
-        //     if (Math2D.isEquals(area, 0) === true) {
-        //         return true;
-        //     } else {
-        //         return false;
-        //     }
-        // }
+        Rectangle.prototype.isEmpty = function () {
+            var area = this.size.width * this.size.height;
+            if (engine.Math2D.isEquals(area, 0) === true) {
+                return true;
+            }
+            else {
+                return false;
+            }
+        };
         Rectangle.create = function (x, y, w, h) {
             if (x === void 0) { x = 0; }
             if (y === void 0) { y = 0; }

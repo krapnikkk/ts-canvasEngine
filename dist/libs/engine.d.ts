@@ -76,6 +76,10 @@ declare module engine {
     type FontFamily = "sans-serif" | "serif" | "courier" | "fantasy" | "monospace";
     export class TestCanvas2DApplication extends Canvas2DApplication {
         constructor(canvas: HTMLCanvasElement);
+        private _mouseX;
+        private _mouseY;
+        protected dispatchMouseMove(evt: CanvasMouseEvent): void;
+        render(): void;
         drawRect(x: number, y: number, w: number, h: number): void;
         testMyRenderStateStack(): void;
         printLineStates(): void;
@@ -90,6 +94,7 @@ declare module engine {
         fillRadialGradient(x: number, y: number, w: number, h: number): void;
         private _pattern;
         fillPattern(x: number, y: number, w: number, h: number, repeat?: Repeatition): void;
+        fillRectangleWithColor(rect: Rectangle, color: string): void;
         fillCircle(x: number, y: number, radius: number, fillStyle?: string | CanvasGradient | CanvasPattern): void;
         strokeLine(x0: number, y0: number, x1: number, y1: number): void;
         strokeCoord(orginX: number, orginY: number, width: number, height: number, lineWidth?: number): void;
@@ -104,6 +109,22 @@ declare module engine {
         makeFontString(size?: FontSize, weight?: FontWeight, style?: FontStyle, variant?: FontVariant, family?: FontFamily): string;
         testMyTextLayout(font?: string): void;
         loadAndDrawImage(url: string): void;
+        drawImage(img: HTMLImageElement | HTMLCanvasElement, destRect: Rectangle, srcRect?: Rectangle, fillType?: EImageFillType): boolean;
+        getColorCanvas(amount?: number): HTMLCanvasElement;
+        drawColorCanvas(): void;
+        testChangePartCanvasImageData(rRow?: number, rColum?: number, cRow?: number, cColum?: number, size?: number): void;
+        printShadowStates(): void;
+        setShadowState(shadowBlur?: number, shadowColor?: string, shadowOffsetX?: number, shadowOffsetY?: number): void;
+        printAllRenderStates(): void;
+        /**
+         *
+         * TransformApplication
+         *
+         */
+        drawCanvasCoordCenter(): void;
+        drawCoordInfo(info: string, x: number, y: number): void;
+        distance(x0: number, y0: number, x1: number, y1: number): number;
+        doTransform(): void;
     }
     export {};
 }
@@ -191,6 +212,14 @@ declare module engine {
     }
 }
 declare module engine {
+    enum EImageFillType {
+        STRETCH = 0,
+        REPEAT = 1,
+        REPEAT_X = 2,
+        REPEAT_Y = 3
+    }
+}
+declare module engine {
     enum EInputEventType {
         MOUSEEVENT = 0,
         MOUSEDOWN = 1,
@@ -263,10 +292,18 @@ declare module engine {
 declare module engine {
 }
 declare module engine {
+    class Math2D {
+        static isEquals(left: number, right: number, espilon?: number): boolean;
+        static toRadian(degree: number): number;
+        static toDegree(radian: number): number;
+    }
+}
+declare module engine {
     class Rectangle {
         origin: vec2;
         size: Size;
         constructor(orign?: vec2, size?: Size);
+        isEmpty(): boolean;
         static create(x?: number, y?: number, w?: number, h?: number): Rectangle;
     }
 }
