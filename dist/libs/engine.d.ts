@@ -99,6 +99,7 @@ declare module engine {
         strokeLine(x0: number, y0: number, x1: number, y1: number): void;
         strokeCoord(orginX: number, orginY: number, width: number, height: number, lineWidth?: number): void;
         strokeRect(x: number, y: number, w: number, h: number, color?: string): void;
+        strokeCircle(x: number, y: number, radius: number, color?: string, lineWidth?: number): void;
         strokeGrid(color?: string, interval?: number): void;
         printTextStates(): void;
         fillText(text: string, x: number, y: number, color?: string, align?: TextAlign, baseline?: TextBaseline, font?: FontType): void;
@@ -124,7 +125,11 @@ declare module engine {
         drawCanvasCoordCenter(): void;
         drawCoordInfo(info: string, x: number, y: number): void;
         distance(x0: number, y0: number, x1: number, y1: number): number;
-        doTransform(): void;
+        fillLocalRectWithTitle(width: number, height: number, title?: string, referencePt?: ELayout, layout?: ELayout, color?: string, showCoord?: boolean): void;
+        rotateTranslate(degree: number, layout?: ELayout, width?: number, height?: number): void;
+        doTranslate(): void;
+        doTransform(degree: number, rotateFirst?: boolean): void;
+        testFillLocalRectWithTitle(): void;
     }
     export {};
 }

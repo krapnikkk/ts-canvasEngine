@@ -332,6 +332,9 @@ var engine;
                 this.context2D.clearRect(0, 0, this.canvas.width, this.canvas.height);
                 this.strokeGrid();
                 this.drawCanvasCoordCenter();
+                // this.doTranslate();
+                // this.doTransform(20, true);
+                this.testFillLocalRectWithTitle();
                 this.drawCoordInfo("[" + this._mouseX + "," + this._mouseY + "]", this._mouseX, this._mouseY);
             }
         };
@@ -530,6 +533,19 @@ var engine;
                 this.context2D.lineTo(x + w, y + h);
                 this.context2D.lineTo(x, y + h);
                 this.context2D.closePath();
+                this.context2D.stroke();
+                this.context2D.restore();
+            }
+        };
+        TestCanvas2DApplication.prototype.strokeCircle = function (x, y, radius, color, lineWidth) {
+            if (color === void 0) { color = 'red'; }
+            if (lineWidth === void 0) { lineWidth = 1; }
+            if (this.context2D !== null) {
+                this.context2D.save();
+                this.context2D.strokeStyle = color;
+                this.context2D.lineWidth = lineWidth;
+                this.context2D.beginPath();
+                this.context2D.arc(x, y, radius, 0, Math.PI * 2);
                 this.context2D.stroke();
                 this.context2D.restore();
             }
@@ -970,7 +986,143 @@ var engine;
             var diffY = y1 - y0;
             return Math.sqrt(diffX * diffX + diffY * diffY);
         };
-        TestCanvas2DApplication.prototype.doTransform = function () {
+        TestCanvas2DApplication.prototype.fillLocalRectWithTitle = function (width, height, title, referencePt, layout, color, showCoord) {
+            if (title === void 0) { title = ''; }
+            if (referencePt === void 0) { referencePt = engine.ELayout.LEFT_TOP; }
+            if (layout === void 0) { layout = engine.ELayout.CENTER_MIDDLE; }
+            if (color === void 0) { color = 'grey'; }
+            if (showCoord === void 0) { showCoord = true; }
+            if (this.context2D !== null) {
+                var x = 0;
+                var y = 0;
+                switch (referencePt) {
+                    case engine.ELayout.LEFT_TOP:
+                        x = 0;
+                        y = 0;
+                        break;
+                    case engine.ELayout.LEFT_MIDDLE:
+                        x = 0;
+                        y = -height * 0.5;
+                        break;
+                    case engine.ELayout.LEFT_BOTTOM:
+                        x = 0;
+                        y = -height;
+                        break;
+                    case engine.ELayout.RIGHT_TOP:
+                        x = -width;
+                        y = 0;
+                        break;
+                    case engine.ELayout.RIGHT_MIDDLE:
+                        x = -width;
+                        y = -height * 0.5;
+                        break;
+                    case engine.ELayout.RIGHT_BOTTOM:
+                        x = -width;
+                        y = -height;
+                        break;
+                    case engine.ELayout.CENTER_TOP:
+                        x = -width * 0.5;
+                        y = 0;
+                        break;
+                    case engine.ELayout.CENTER_MIDDLE:
+                        x = -width * 0.5;
+                        y = -height * 0.5;
+                        break;
+                    case engine.ELayout.CENTER_BOTTOM:
+                        x = -width * 0.5;
+                        y = -height;
+                        break;
+                }
+                this.context2D.save();
+                this.context2D.fillStyle = color;
+                this.context2D.beginPath();
+                this.context2D.rect(x, y, width, height);
+                this.context2D.fill();
+                if (title.length !== 0) {
+                    var rect = this.calcLocalTextRectangle(layout, title, width, height);
+                    this.fillText(title, x + rect.origin.x, y + rect.origin.y, 'white', 'left', 'top' /*, '10px sans-serif'*/);
+                    this.strokeRect(x + rect.origin.x, y + rect.origin.y, rect.size.width, rect.size.height, 'rgba( 0 , 0 , 0 , 0.5 ) ');
+                    this.fillCircle(x + rect.origin.x, y + rect.origin.y, 2);
+                }
+                if (showCoord) {
+                    this.strokeCoord(0, 0, width + 20, height + 20);
+                    this.fillCircle(0, 0, 3);
+                }
+                this.context2D.restore();
+            }
+        };
+        TestCanvas2DApplication.prototype.rotateTranslate = function (degree, layout, width, height) {
+            if (layout === void 0) { layout = engine.ELayout.LEFT_TOP; }
+            if (width === void 0) { width = 40; }
+            if (height === void 0) { height = 20; }
+            if (this.context2D === null) {
+                return;
+            }
+            var radians = engine.Math2D.toRadian(degree);
+            this.context2D.save();
+            this.context2D.rotate(radians);
+            this.context2D.translate(this.canvas.width * 0.5, this.canvas.height * 0.5);
+            this.fillLocalRectWithTitle(width, height, "", layout);
+            this.context2D.restore();
+        };
+        TestCanvas2DApplication.prototype.doTranslate = function () {
+            if (this.context2D !== null) {
+                var width = 100;
+                var height = 60;
+                var x = this.canvas.width * 0.5;
+                var y = this.canvas.height * 0.5;
+                this.context2D.save();
+                this.context2D.translate(x, y);
+                this.fillRectWithTitle(0, 0, width, height, "平移到中心");
+                this.context2D.restore();
+            }
+        };
+        TestCanvas2DApplication.prototype.doTransform = function (degree, rotateFirst) {
+            if (rotateFirst === void 0) { rotateFirst = true; }
+            if (this.context2D !== null) {
+                var radians = engine.Math2D.toRadian(degree);
+                this.context2D.save();
+                if (rotateFirst) {
+                    this.context2D.rotate(radians);
+                    this.context2D.translate(this.canvas.width * 0.5, this.canvas.height * 0.5);
+                }
+                else {
+                    this.context2D.translate(this.canvas.width * 0.5, this.canvas.height * 0.5);
+                    this.context2D.rotate(radians);
+                }
+                // this.fillRectWithTitle(0, 0, 100, 60, '+' + degree + '度旋转');
+                this.fillLocalRectWithTitle(100, 60, '+' + degree + '度旋转', engine.ELayout.CENTER_MIDDLE);
+                this.context2D.restore();
+                this.context2D.save();
+                if (rotateFirst) {
+                    this.context2D.rotate(-radians);
+                    this.context2D.translate(this.canvas.width * 0.5, this.canvas.height * 0.5);
+                }
+                else {
+                    this.context2D.translate(this.canvas.width * 0.5, this.canvas.height * 0.5);
+                    this.context2D.rotate(-radians);
+                }
+                // this.fillRectWithTitle(0, 0, 100, 60, '-' + degree + '度旋转');
+                this.fillLocalRectWithTitle(100, 60, '-' + degree + '度旋转', engine.ELayout.CENTER_MIDDLE);
+                this.context2D.restore();
+                var radius = this.distance(0, 0, this.canvas.width * 0.5, this.canvas.height * 0.5);
+                this.strokeCircle(0, 0, radius, 'black');
+            }
+        };
+        TestCanvas2DApplication.prototype.testFillLocalRectWithTitle = function () {
+            if (this.context2D !== null) {
+                this.rotateTranslate(0, engine.ELayout.LEFT_TOP);
+                this.rotateTranslate(8, engine.ELayout.LEFT_MIDDLE);
+                this.rotateTranslate(16, engine.ELayout.LEFT_BOTTOM);
+                this.rotateTranslate(24, engine.ELayout.CENTER_TOP);
+                this.rotateTranslate(32, engine.ELayout.CENTER_MIDDLE);
+                this.rotateTranslate(-8, engine.ELayout.CENTER_BOTTOM);
+                this.rotateTranslate(-16, engine.ELayout.RIGHT_TOP);
+                this.rotateTranslate(-24, engine.ELayout.RIGHT_MIDDLE);
+                this.rotateTranslate(-32, engine.ELayout.RIGHT_BOTTOM);
+                var radius = this.distance(0, 0, this.canvas.width * 0.5, this.canvas.height * 0.5);
+                this.strokeCircle(0, 0, radius, 'black');
+            }
         };
         TestCanvas2DApplication.Colors = [
             'aqua',
