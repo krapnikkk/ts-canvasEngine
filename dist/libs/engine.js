@@ -64,7 +64,7 @@ var engine;
         Application.prototype.isRunning = function () {
             return this._start;
         };
-        Application.prototype.update = function (elapsedMsec, intervalMsec) {
+        Application.prototype.update = function (elapsedMsec, intervalSec) {
         };
         Application.prototype.render = function () {
         };
@@ -321,6 +321,12 @@ var engine;
             _this._mouseX = 0;
             _this._mouseY = 0;
             _this._lineDashOffset = 0;
+            _this._rotationSunSpeed = 50;
+            _this._rotationMoonSpeed = 100;
+            _this._revolutionSpeed = 60;
+            _this._rotationSun = 0;
+            _this._rotationMoon = 0;
+            _this._revolution = 0;
             return _this;
         }
         TestCanvas2DApplication.prototype.dispatchMouseMove = function (evt) {
@@ -334,7 +340,11 @@ var engine;
                 this.drawCanvasCoordCenter();
                 // this.doTranslate();
                 // this.doTransform(20, true);
-                this.testFillLocalRectWithTitle();
+                // this.testFillLocalRectWithTitle();
+                // this.doLocalTransform();
+                // this.testFillLocalRectWithTitleUV();
+                this.rotationAndRevolutionSimulation();
+                this.draw4Quadrant();
                 this.drawCoordInfo("[" + this._mouseX + "," + this._mouseY + "]", this._mouseX, this._mouseY);
             }
         };
@@ -991,7 +1001,7 @@ var engine;
             if (referencePt === void 0) { referencePt = engine.ELayout.LEFT_TOP; }
             if (layout === void 0) { layout = engine.ELayout.CENTER_MIDDLE; }
             if (color === void 0) { color = 'grey'; }
-            if (showCoord === void 0) { showCoord = true; }
+            if (showCoord === void 0) { showCoord = false; }
             if (this.context2D !== null) {
                 var x = 0;
                 var y = 0;
@@ -1109,6 +1119,86 @@ var engine;
                 this.strokeCircle(0, 0, radius, 'black');
             }
         };
+        TestCanvas2DApplication.prototype.doLocalTransform = function () {
+            if (this.context2D === null) {
+                return;
+            }
+            var width = 100;
+            var height = 60;
+            var coordWidth = width * 1.2;
+            var coordHeight = height * 1.2;
+            var radius = 5;
+            this.context2D.save();
+            // 
+            this.fillLocalRectWithTitle(width, height, '1. 初始状态');
+            this.strokeCoord(0, 0, coordWidth, coordHeight);
+            this.fillCircle(0, 0, radius);
+            this.context2D.translate(this.canvas.width * 0.5, 10);
+            this.fillLocalRectWithTitle(width, height, '2. 平移');
+            this.strokeCoord(0, 0, coordWidth, coordHeight);
+            this.fillCircle(0, 0, radius);
+            this.context2D.translate(0, this.canvas.height * 0.5 - 10);
+            this.fillLocalRectWithTitle(width, height, '3. 平移到画布中心');
+            this.strokeCoord(0, 0, coordWidth, coordHeight);
+            this.fillCircle(0, 0, radius);
+            this.context2D.rotate(engine.Math2D.toRadian(-120));
+            this.fillLocalRectWithTitle(width, height, '4. 旋转-120度');
+            this.strokeCoord(0, 0, coordWidth, coordHeight);
+            this.fillCircle(0, 0, radius);
+            this.context2D.rotate(engine.Math2D.toRadian(-130));
+            this.fillLocalRectWithTitle(width, height, '5. 旋转-130度');
+            this.strokeCoord(0, 0, coordWidth, coordHeight);
+            this.fillCircle(0, 0, radius);
+            this.context2D.translate(100, 100);
+            this.fillLocalRectWithTitle(width, height, '6. 局部平移100个单位');
+            this.strokeCoord(0, 0, coordWidth, coordHeight);
+            this.fillCircle(0, 0, radius);
+            //this . fillLocalRectWithTitle ( width * 1.5 , height * 2.0 , '' ) ;
+            this.context2D.scale(1.5, 2.0);
+            // this.fillLocalRectWithTitle(width, height, '7. 缩放局部坐标系');
+            this.fillLocalRectWithTitle(width, height, '7. 缩放局部坐标系', engine.ELayout.LEFT_MIDDLE);
+            // this . fillLocalRectWithTitle ( width * 1.5 , height * 2.0 , '7. 放大物体尺寸' ) ;
+            this.strokeCoord(0, 0, coordWidth, coordHeight);
+            this.fillCircle(0, 0, radius);
+            /*
+            this . context2D . rotate ( Math2D . toRadian ( 70 ) ) ;
+            this . fillLocalRectWithTitle ( width , height , '4. 继续旋转70度' ) ;
+        
+            this . context2D . translate ( 0 , 100 ) ;
+            this . fillLocalRectWithTitle ( width , height , '5. y轴局部平移100像素' ) ;
+        
+            this . context2D .scale ( 1.5 , 1.0 ) ;
+            this . fillLocalRectWithTitle (width , height , '6. x轴局部放大1.5倍' ) ;
+            */
+            this.context2D.restore();
+        };
+        TestCanvas2DApplication.prototype.fillLocalRectWithTitleUV = function (width, height, title, u, v, layout, color, showCoord) {
+            if (u === void 0) { u = 0; }
+            if (v === void 0) { v = 0; }
+            if (layout === void 0) { layout = engine.ELayout.CENTER_MIDDLE; }
+            if (color === void 0) { color = "grey"; }
+            if (showCoord === void 0) { showCoord = true; }
+            if (this.context2D !== null) {
+                var x = -width * u;
+                var y = -height * v;
+                this.context2D.save();
+                this.context2D.fillStyle = color;
+                this.context2D.beginPath();
+                this.context2D.rect(x, y, width, height);
+                this.context2D.fill();
+                if (title.length !== 0) {
+                    var rect = this.calcLocalTextRectangle(layout, title, width, height);
+                    this.fillText(title, x + rect.origin.x, y + rect.origin.y, 'white', 'left', 'top' /*, '10px sans-serif'*/);
+                    this.strokeRect(x + rect.origin.x, y + rect.origin.y, rect.size.width, rect.size.height, 'rgba( 0 , 0 , 0 , 0.5 ) ');
+                    this.fillCircle(x + rect.origin.x, y + rect.origin.y, 2);
+                }
+                if (showCoord) {
+                    this.strokeCoord(0, 0, width + 20, height + 20);
+                    this.fillCircle(0, 0, 3);
+                }
+                this.context2D.restore();
+            }
+        };
         TestCanvas2DApplication.prototype.testFillLocalRectWithTitle = function () {
             if (this.context2D !== null) {
                 this.rotateTranslate(0, engine.ELayout.LEFT_TOP);
@@ -1123,6 +1213,95 @@ var engine;
                 var radius = this.distance(0, 0, this.canvas.width * 0.5, this.canvas.height * 0.5);
                 this.strokeCircle(0, 0, radius, 'black');
             }
+        };
+        TestCanvas2DApplication.prototype.translateRotateTranslateDrawRect = function (degree, u, v, radius, width, height) {
+            if (u === void 0) { u = 0; }
+            if (v === void 0) { v = 0; }
+            if (radius === void 0) { radius = 200; }
+            if (width === void 0) { width = 40; }
+            if (height === void 0) { height = 20; }
+            if (this.context2D === null) {
+                return;
+            }
+            var radians = engine.Math2D.toRadian(degree);
+            this.context2D.save();
+            this.context2D.translate(this.canvas.width * 0.5, this.canvas.height * 0.5);
+            this.context2D.rotate(radians);
+            this.context2D.translate(radius, 0);
+            this.fillLocalRectWithTitleUV(width, height, "", u, v);
+            this.context2D.restore();
+        };
+        TestCanvas2DApplication.prototype.testFillLocalRectWithTitleUV = function () {
+            if (this.context2D === null) {
+                return;
+            }
+            var radius = 200;
+            var steps = 18;
+            for (var i = 0; i <= steps; i++) {
+                var n = i / steps;
+                this.translateRotateTranslateDrawRect(i * 10, n, 0, radius);
+            }
+            for (var i = 0; i < steps; i++) {
+                var n = i / steps;
+                this.translateRotateTranslateDrawRect(-i * 10, 0, n, radius);
+            }
+            this.context2D.save();
+            this.context2D.translate(this.canvas.width * 0.5 - radius * 0.4, this.canvas.height * 0.5 - radius * 0.4);
+            this.fillLocalRectWithTitleUV(100, 60, 'u = 0.5 / v = 0.5', 0.5, 0.5);
+            this.context2D.restore();
+            this.context2D.save();
+            this.context2D.translate(this.canvas.width * 0.5 + radius * 0.2, this.canvas.height * 0.5 - radius * 0.2);
+            this.fillLocalRectWithTitleUV(100, 60, 'u = 0 / v = 1', 0, 1);
+            this.context2D.restore();
+            this.context2D.save();
+            this.context2D.translate(this.canvas.width * 0.5 + radius * 0.3, this.canvas.height * 0.5 + radius * 0.4);
+            this.fillLocalRectWithTitleUV(100, 60, 'u = 0.3 / v = 0.6', 0.3, 0.6);
+            this.context2D.restore();
+            this.context2D.save();
+            this.context2D.translate(this.canvas.width * 0.5 - radius * 0.1, this.canvas.height * 0.5 + radius * 0.25);
+            this.fillLocalRectWithTitleUV(100, 60, 'u = 1 / v = 0.2', 1, 0.2);
+            this.context2D.restore();
+            this.strokeCircle(this.canvas.width * 0.5, this.canvas.height * 0.5, radius, 'rgba( 0 , 255 , 255 , 0.5 )', 10);
+        };
+        TestCanvas2DApplication.prototype.update = function (elapsedMsec, intervalSec) {
+            this._rotationMoon += this._rotationMoonSpeed * intervalSec;
+            this._rotationSun += this._rotationSunSpeed * intervalSec;
+            this._revolution += this._revolutionSpeed * intervalSec;
+        };
+        TestCanvas2DApplication.prototype.rotationAndRevolutionSimulation = function (radius) {
+            if (radius === void 0) { radius = 250; }
+            if (this.context2D === null) {
+                return;
+            }
+            var rotationMoon = engine.Math2D.toRadian(this._rotationMoon);
+            var rotationSun = engine.Math2D.toRadian(this._rotationSun);
+            var revolution = engine.Math2D.toRadian(this._revolution);
+            this.context2D.save();
+            this.context2D.translate(this.canvas.width * 0.5, this.canvas.height * 0.5);
+            this.context2D.save();
+            this.context2D.rotate(rotationSun);
+            // this.fillLocalRectWithTitleUV(100, 100, '自转', 0.5, 0.5);
+            this.context2D.translate(-50, -50);
+            this.fillLocalRectWithTitleUV(100, 100, '自转', 0, 0);
+            this.context2D.restore();
+            this.context2D.save();
+            this.context2D.rotate(revolution);
+            this.context2D.translate(radius, 0);
+            this.context2D.rotate(rotationMoon);
+            this.fillLocalRectWithTitleUV(80, 80, '自转+公转', 0.5, 0.5);
+            this.context2D.restore();
+            this.context2D.restore();
+        };
+        TestCanvas2DApplication.prototype.draw4Quadrant = function () {
+            if (this.context2D === null) {
+                return;
+            }
+            this.context2D.save();
+            this.fillText("第一象限", this.canvas.width, this.canvas.height, 'rgba( 0 , 0 , 255 , 0.5 )', 'right', 'bottom', "20px sans-serif");
+            this.fillText("第二象限", 0, this.canvas.height, 'rgba( 0 , 0 , 255 , 0.5 )', 'left', 'bottom', "20px sans-serif");
+            this.fillText("第三象限", 0, 0, 'rgba( 0 , 0 , 255 , 0.5 )', 'left', 'top', "20px sans-serif");
+            this.fillText("第四象限", this.canvas.width, 0, 'rgba( 0 , 0 , 255 , 0.5 )', 'right', 'top', "20px sans-serif");
+            this.context2D.restore();
         };
         TestCanvas2DApplication.Colors = [
             'aqua',

@@ -60,7 +60,7 @@ module engine {
             return this._start;
         }
 
-        update(elapsedMsec: number, intervalMsec: number): void {
+        update(elapsedMsec: number, intervalSec: number): void {
 
         }
 

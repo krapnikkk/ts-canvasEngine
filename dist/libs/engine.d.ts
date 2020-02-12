@@ -14,7 +14,7 @@ declare module engine {
         step(timeStamp: number): void;
         stop(): void;
         isRunning(): boolean;
-        update(elapsedMsec: number, intervalMsec: number): void;
+        update(elapsedMsec: number, intervalSec: number): void;
         render(): void;
         private _viewportToCanvasCoordinate;
         private _toCanvasMouseEvent;
@@ -129,7 +129,20 @@ declare module engine {
         rotateTranslate(degree: number, layout?: ELayout, width?: number, height?: number): void;
         doTranslate(): void;
         doTransform(degree: number, rotateFirst?: boolean): void;
+        doLocalTransform(): void;
+        fillLocalRectWithTitleUV(width: number, height: number, title: string, u?: number, v?: number, layout?: ELayout, color?: string, showCoord?: boolean): void;
         testFillLocalRectWithTitle(): void;
+        translateRotateTranslateDrawRect(degree: number, u?: number, v?: number, radius?: number, width?: number, height?: number): void;
+        testFillLocalRectWithTitleUV(): void;
+        private _rotationSunSpeed;
+        private _rotationMoonSpeed;
+        private _revolutionSpeed;
+        private _rotationSun;
+        private _rotationMoon;
+        private _revolution;
+        update(elapsedMsec: number, intervalSec: number): void;
+        rotationAndRevolutionSimulation(radius?: number): void;
+        draw4Quadrant(): void;
     }
     export {};
 }
