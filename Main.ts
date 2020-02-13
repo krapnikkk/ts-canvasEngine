@@ -39,7 +39,24 @@ joints  {
 
 
 let app = new engine.TestCanvas2DApplication(canvas);
-app.start();
+let ptX: number = 600, ptY: number = 500;
+app.strokeGrid();
+app.drawCanvasCoordCenter();
+app.draw4Quadrant();
+app.tank.initYAxis = false;
+app.drawTank();
+app.tank.tankRotation = Math.atan2(ptX - app.canvas.width / 2, ptY - app.canvas.height / 2);
+app.drawTank();
+let len: number = app.distance(ptX, ptY, app.canvas.width / 2, app.canvas.height / 2);
+app.tank.x = app.tank.x + Math.cos(app.tank.tankRotation) * len * 0.5;
+app.tank.y = app.tank.y + Math.sin(app.tank.tankRotation) * len * 0.5;
+app.drawTank();
+app.tank.x = app.tank.x + Math.cos(app.tank.tankRotation) * len * 0.5;
+app.tank.y = app.tank.y + Math.sin(app.tank.tankRotation) * len * 0.5;
+app.drawTank();
+app.drawTriangle(app.canvas.width / 2, app.canvas.height / 2, ptX, app.canvas.height / 2, ptX, ptY);
+// app.start();
+
 // app.drawRect(10,10,canvas.width-20,canvas.height-20);
 // app.testMyRenderStateStack();
 // app.printLineStates();

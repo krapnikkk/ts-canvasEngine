@@ -11,8 +11,17 @@ module engine {
 
 
     export class TestCanvas2DApplication extends Canvas2DApplication {
+        private _tank: Tank;
+        public tank: Tank;
         constructor(canvas: HTMLCanvasElement) {
             super(canvas);
+            this.tank = this._tank = new Tank();
+            this._tank.x = canvas.width * 0.5;
+            this._tank.y = canvas.height * 0.5;
+            // this._tank.scaleX = 2;
+            // this._tank.scaleY = 2;
+            // this._tank.tankRotation = Math2D.toRadian(30);
+            // this._tank.turretRotation = Math2D.toRadian(-30);
         }
 
         private _mouseX: number = 0;
@@ -20,22 +29,35 @@ module engine {
         protected dispatchMouseMove(evt: CanvasMouseEvent): void {
             this._mouseX = evt.canvasPosition.x;
             this._mouseY = evt.canvasPosition.y;
+            this._tank.onMouseMove(evt);
+        }
+
+        protected dispatchKeyPress(evt: CanvasKeyBoardEvent): void {
+            this._tank.onKeyPress(evt);
+        }
+
+        drawTank(): void {
+            this._tank.draw(this);
         }
 
         render(): void {
             if (this.context2D !== null) {
                 this.context2D.clearRect(0, 0, this.canvas.width, this.canvas.height);
-                this.strokeGrid();
-                this.drawCanvasCoordCenter();
+                // this.strokeGrid();
+                // this.drawCanvasCoordCenter();
 
                 // this.doTranslate();
                 // this.doTransform(20, true);
                 // this.testFillLocalRectWithTitle();
                 // this.doLocalTransform();
                 // this.testFillLocalRectWithTitleUV();
-                this.rotationAndRevolutionSimulation();
-                this.draw4Quadrant();
-                this.drawCoordInfo(`[${this._mouseX},${this._mouseY}]`, this._mouseX, this._mouseY);
+                // this.rotationAndRevolutionSimulation();
+
+
+                // this.draw4Quadrant();
+                // this.drawTank();
+                // this.drawCoordInfo(`坐标：${(this._mouseX - this._tank.x).toFixed(2)},${(this._mouseY - this._tank.y).toFixed(2)} 角度：${Math2D.toDegree(this._tank.tankRotation).toFixed(2)}`, this._mouseX, this._mouseY);
+                // this.drawCoordInfo(`[${this._mouseX},${this._mouseY}]`, this._mouseX, this._mouseY);
             }
         }
 
@@ -221,7 +243,7 @@ module engine {
             }
         }
 
-        public fillRectangleWithColor(rect: Rectangle, color: string): void {
+        fillRectangleWithColor(rect: Rectangle, color: string): void {
             if (rect.isEmpty()) {
                 return;
             }
@@ -1048,9 +1070,10 @@ module engine {
         private _revolution: number = 0;
 
         update(elapsedMsec: number, intervalSec: number): void {
-            this._rotationMoon += this._rotationMoonSpeed * intervalSec;
-            this._rotationSun += this._rotationSunSpeed * intervalSec;
-            this._revolution += this._revolutionSpeed * intervalSec;
+            // this._rotationMoon += this._rotationMoonSpeed * intervalSec;
+            // this._rotationSun += this._rotationSunSpeed * intervalSec;
+            // this._revolution += this._revolutionSpeed * intervalSec;
+            // this._tank.update(intervalSec);
         }
 
         rotationAndRevolutionSimulation(radius: number = 250): void {
@@ -1079,7 +1102,7 @@ module engine {
             this.context2D.restore();
         }
 
-        public draw4Quadrant(): void {
+        draw4Quadrant(): void {
             if (this.context2D === null) {
                 return;
             }
@@ -1090,6 +1113,27 @@ module engine {
             this.fillText("第三象限", 0, 0, 'rgba( 0 , 0 , 255 , 0.5 )', 'left', 'top', "20px sans-serif");
             this.fillText("第四象限", this.canvas.width, 0, 'rgba( 0 , 0 , 255 , 0.5 )', 'right', 'top', "20px sans-serif");
 
+            this.context2D.restore();
+        }
+
+        drawTriangle(x0: number, y0: number, x1: number, y1: number, x2: number, y2: number, stroke: boolean = true): void {
+            if (this.context2D === null) {
+                return;
+            }
+            this.context2D.save();
+            this.context2D.lineWidth = 3;
+            this.context2D.strokeStyle = "rgba(0, 0, 0,0.5)";
+            this.context2D.beginPath();
+            this.context2D.moveTo(x0, y0);
+            this.context2D.lineTo(x1, y1);
+            this.context2D.lineTo(x2, y2);
+            this.context2D.closePath();
+            if (stroke) {
+                this.context2D.stroke();
+            } else {
+                this.context2D.fill();
+            }
+            this.fillCircle(x2, y2, 5);
             this.context2D.restore();
         }
     }

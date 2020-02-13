@@ -75,10 +75,14 @@ declare module engine {
     type FontSize = "10px" | "12px" | "16px" | "18px" | "24px" | "50%" | "75%" | "100%" | "125%" | "150%" | "xx-small" | "x-small" | "small" | "medium" | "large" | "x-large" | "xx-large";
     type FontFamily = "sans-serif" | "serif" | "courier" | "fantasy" | "monospace";
     export class TestCanvas2DApplication extends Canvas2DApplication {
+        private _tank;
+        tank: Tank;
         constructor(canvas: HTMLCanvasElement);
         private _mouseX;
         private _mouseY;
         protected dispatchMouseMove(evt: CanvasMouseEvent): void;
+        protected dispatchKeyPress(evt: CanvasKeyBoardEvent): void;
+        drawTank(): void;
         render(): void;
         drawRect(x: number, y: number, w: number, h: number): void;
         testMyRenderStateStack(): void;
@@ -143,6 +147,7 @@ declare module engine {
         update(elapsedMsec: number, intervalSec: number): void;
         rotationAndRevolutionSimulation(radius?: number): void;
         draw4Quadrant(): void;
+        drawTriangle(x0: number, y0: number, x1: number, y1: number, x2: number, y2: number, stroke?: boolean): void;
     }
     export {};
 }
@@ -227,6 +232,33 @@ declare module engine {
 declare module engine {
     interface IDoom3Tokenizer extends IEnumerator<IDoom3Token> {
         setSource(source: string): void;
+    }
+}
+declare module engine {
+    class Tank {
+        width: number;
+        height: number;
+        x: number;
+        y: number;
+        scaleX: number;
+        scaleY: number;
+        tankRotation: number;
+        turretRotation: number;
+        initYAxis: boolean;
+        showLine: boolean;
+        showCoord: boolean;
+        gunLength: number;
+        gunMuzzleRadius: number;
+        targetX: number;
+        targetY: number;
+        draw(app: TestCanvas2DApplication): void;
+        private _lookAt;
+        onMouseMove(evt: CanvasMouseEvent): void;
+        linearSpeed: number;
+        _moveTowardTo(intervalSec: number): void;
+        update(intervalSec: number): void;
+        turretRotationSpeed: number;
+        onKeyPress(evt: CanvasKeyBoardEvent): void;
     }
 }
 declare module engine {
